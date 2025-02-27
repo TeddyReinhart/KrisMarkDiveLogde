@@ -1,24 +1,32 @@
 import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Home, ListCheck,HousePlus, Settings, LogOut } from "lucide-react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Home, ListCheck, HousePlus, Settings, LogOut } from "lucide-react";
+import { auth } from "../Firebase/Firebase"; // Import Firebase auth
+import { signOut } from "firebase/auth"; // Import signOut function
 import logo from "../images/logo.png";
 
-function AdminNavbar({ logoutHandler }) {
+function AdminNavbar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation(); // Get current location
+  const location = useLocation();
 
-  const handleLogout = () => {
-    logoutHandler();
-    navigate("/login");
+  // Check if the current route is under "/admin/settings"
+  const isSettingsActive = location.pathname.startsWith("/admin/settings");
+
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      await signOut(auth); // Sign out from Firebase
+      navigate("/login"); // Redirect to login page
+      console.log("User signed out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const toggleSettings = () => {
     setIsSettingsOpen((prev) => !prev);
   };
-
-  // Check if the current route is exactly "/admin/settings"
-  const isSettingsActive = location.pathname === "/admin/settings";
 
   return (
     <div className="flex h-screen">
@@ -35,7 +43,7 @@ function AdminNavbar({ logoutHandler }) {
             {/* Home */}
             <li>
               <NavLink
-                to="/admin"
+                to="/admin-home"
                 end
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
@@ -62,9 +70,11 @@ function AdminNavbar({ logoutHandler }) {
                 <span>Complaints</span>
               </NavLink>
             </li>
+
+            {/* Room Management */}
             <li>
               <NavLink
-                to="/admin/room-management"
+                to="/admin-home/room-management"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
                     isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
@@ -75,6 +85,7 @@ function AdminNavbar({ logoutHandler }) {
                 <span>Room Management</span>
               </NavLink>
             </li>
+
             {/* Settings Dropdown */}
             <li>
               <div
@@ -133,11 +144,6 @@ function AdminNavbar({ logoutHandler }) {
           </ul>
         </nav>
       </aside>
-
-      {/* Content Area */}
-      <div className="flex-1 ml-60 p-8">
-        <Outlet />
-      </div>
     </div>
   );
 }

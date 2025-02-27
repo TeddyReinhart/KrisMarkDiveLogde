@@ -1,6 +1,5 @@
 import React from "react";
-import { FileText } from "lucide-react"; // Importing an icon for export
-import logo from "../images/logo.png"; // Ensure you have a logo
+
 import { useNavigate } from "react-router-dom";
 
 const complaintsData = [

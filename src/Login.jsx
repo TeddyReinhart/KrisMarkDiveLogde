@@ -1,83 +1,110 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { auth } from "./Firebase/Firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
 
 import loginpic from "./images/login.png";
 import logo from "./images/logo1.png";
 
-function Login({ setIsLoggedIn }) {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState("Staff"); // Default role is Staff
   const navigate = useNavigate();
+
+  // Step 1: Check authentication state on component mount
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, redirect to a default page (e.g., admin-home)
+        navigate("/admin-home", { replace: true });
+      } else {
+        // User is not signed in, stay on the login page
+        console.log("No user is signed in.");
+      }
+    });
+
+    // Cleanup the observer when the component unmounts
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // Function to map Firebase error codes to user-friendly messages
+  const getErrorMessage = (errorCode) => {
+    switch (errorCode) {
+      case "auth/invalid-email":
+        return "Invalid email address.";
+      case "auth/user-not-found":
+        return "User not found. Please check your email.";
+      case "auth/wrong-password":
+        return "Incorrect password. Please try again.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please try again later.";
+      default:
+        return "An error occurred. Please try again.";
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
+
+    // Basic validation
+    if (!email || !password) {
+      setError("Please fill all fields.");
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
+    setError("");
 
     try {
-      const cleanedEmail = email.toLowerCase().trim(); // Ensure consistency
-
-      // Authenticate user with Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, cleanedEmail, password);
+      // Step 2: Sign in with Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      console.log("User signed in:", user);
 
-      console.log("✅ User authenticated:", user.email);
+      // Step 3: Fetch user role from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      console.log("Firestore document:", userDoc.data());
 
-      // Determine which Firestore collection to query based on the selected role
-      const collectionName = role === "Admin" ? "Admin" : "users"; // Query "Admin" or "users" collection
-      const usersCollection = collection(db, collectionName);
-      const q = query(usersCollection, where("Email", "==", cleanedEmail)); // Query by email
-      console.log("🔍 Querying Firestore for email:", cleanedEmail);
-
-      const querySnapshot = await getDocs(q);
-      console.log("📊 Query Snapshot Size:", querySnapshot.size);
-
-      if (querySnapshot.empty) {
-        console.error("🚨 Firestore Query Error: No matching user found!");
-        throw new Error(`No ${role} found with that email. Please check your credentials.`);
+      if (!userDoc.exists()) {
+        throw new Error("User data not found. Please contact support.");
       }
 
-      const userData = querySnapshot.docs[0].data();
-      const userRole = userData.Role; // Get user role from Firestore
+      const userData = userDoc.data();
+      const role = userData.role;
+      console.log("User role:", role);
 
-      console.log("🎭 Fetched Firestore Role:", userRole);
-
-      // Validate if the selected role matches the user's role in Firestore
-      if (role !== userRole) {
-        throw new Error(`You do not have access to the ${role} side.`);
+      // Step 4: Redirect based on role
+      switch (role) {
+        case "admin":
+          navigate("/admin-home", { replace: true });
+          break;
+        case "staff":
+          navigate("/home", { replace: true });
+          break;
+        default:
+          throw new Error("Invalid role.");
       }
-
-      // Save login state and role to localStorage
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", userRole);
-
-      alert("✅ Login Successful!");
-      setIsLoggedIn(true);
-
-      // Redirect based on role
-      navigate(userRole === "Admin" ? "/admin" : "/");
-    } catch (err) {
-      console.error("❌ Login error:", err.code || err.message);
-
-      if (err.code === "auth/wrong-password") {
-        setError("Incorrect password. Please try again.");
-      } else if (err.code === "auth/user-not-found") {
-        setError("No user found with that email. Please check your credentials.");
-      } else if (err.code === "auth/invalid-credential") {
-        setError("Invalid email or password. Please check your credentials.");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Invalid email format. Please enter a valid email.");
-      } else {
-        setError(err.message || "An unexpected error occurred. Please try again.");
-      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError(getErrorMessage(error.code)); // Use user-friendly error message
     } finally {
       setLoading(false);
     }
@@ -85,18 +112,19 @@ function Login({ setIsLoggedIn }) {
 
   return (
     <div className="flex min-h-screen">
+      {/* Background Image */}
       <div
-        className="w-1/2 relative"
+        className="hidden lg:block w-1/2 relative"
         style={{
           backgroundImage: `url(${loginpic})`,
           backgroundSize: "cover",
           backgroundPosition: "left center",
           height: "100vh",
-          width: "50vw",
         }}
       ></div>
 
-      <div className="w-1/2 flex items-center justify-center">
+      {/* Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md p-8 bg-white shadow-lg rounded-md">
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Logo" className="w-20 h-20" />
@@ -142,25 +170,38 @@ function Login({ setIsLoggedIn }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md"
-                required
-              >
-                <option value="Staff">Staff</option>
-                <option value="Admin">Admin</option>
-              </select>
-            </div>
-
             <button
               type="submit"
-              className="w-full bg-orange-600 text-white py-3 rounded-md hover:bg-orange-700 transition"
+              className="w-full bg-orange-600 text-white py-3 rounded-md hover:bg-orange-700 transition flex items-center justify-center"
               disabled={loading}
             >
-              {loading ? "Loading..." : "LOGIN"}
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 mr-3 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Loading...
+                </>
+              ) : (
+                "LOGIN"
+              )}
             </button>
           </form>
 
@@ -179,6 +220,6 @@ function Login({ setIsLoggedIn }) {
       </div>
     </div>
   );
-}
+};
 
 export default Login;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink,  useNavigate } from "react-router-dom";
 import { Home, CalendarDays, User, Settings, LogOut } from "lucide-react";
 import logo from "../images/logo.png";
 
@@ -115,11 +115,6 @@ function Navbar({ logoutHandler }) {
           </ul>
         </nav>
       </aside>
-
-      {/* Content Area */}
-      <div className="flex-1 ml-60 p-8">
-        <Outlet />
-      </div>
     </div>
   );
 }
