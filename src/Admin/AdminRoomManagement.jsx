@@ -1,17 +1,14 @@
-import { useState } from "react";
-import { uploadImageToCloudinary } from "../Utils/cloudinaryUpload";
+import { useState, useEffect } from "react";
+import { uploadImageToCloudinary } from "../Utils/uploadImageToCloudinary";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
 import { Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Checkbox, Select } from "../Layout/Components";
 import { PlusCircle, Trash2, Edit, Image } from "lucide-react";
+import { app } from "../Firebase/Firebase";
 
-const initialRooms = [
-  { id: 1, name: "Triple Room", image: "", guests: 3, wifi: true, bathroom: true, status: "Available" },
-  { id: 2, name: "Standard Double Room", image: "", guests: 2, wifi: true, bathroom: true, status: "Occupied" },
-  { id: 3, name: "Twin Room", image: "", guests: 2, wifi: true, bathroom: true, status: "Limited Available" },
-  { id: 4, name: "Family Room", image: "", guests: 4, wifi: true, bathroom: true, status: "Available" },
-];
+const db = getFirestore(app);
 
 export default function AdminRoomManagement() {
-  const [rooms, setRooms] = useState(initialRooms);
+  const [rooms, setRooms] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -26,6 +23,21 @@ export default function AdminRoomManagement() {
     status: "Available",
   });
 
+  // Fetch rooms from Firebase on component mount
+  useEffect(() => {
+    const fetchRooms = async () => {
+      const querySnapshot = await getDocs(collection(db, "rooms"));
+      const roomsData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setRooms(roomsData);
+    };
+
+    fetchRooms();
+  }, []);
+
+  // Handle file input change
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
@@ -37,11 +49,13 @@ export default function AdminRoomManagement() {
     }
   };
 
+  // Handle form input change
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
+  // Add a new room
   const addRoom = async () => {
     if (!selectedFile) {
       alert("Please select an image before adding a room.");
@@ -51,9 +65,11 @@ export default function AdminRoomManagement() {
     setLoading(true);
 
     try {
+      // Upload image to Cloudinary
       const imageUrl = await uploadImageToCloudinary(selectedFile);
+
+      // Save room data to Firebase Firestore
       const newRoom = {
-        id: rooms.length + 1,
         name: formData.name,
         image: imageUrl,
         guests: parseInt(formData.guests),
@@ -62,22 +78,35 @@ export default function AdminRoomManagement() {
         status: formData.status,
       };
 
-      setRooms([...rooms, newRoom]);
+      const docRef = await addDoc(collection(db, "rooms"), newRoom);
+
+      // Update local state
+      setRooms([...rooms, { id: docRef.id, ...newRoom }]);
+
+      // Reset form and close modal
       setSelectedFile(null);
       setPreview("");
-      setIsAddModalOpen(false); // Close modal after adding
+      setIsAddModalOpen(false);
     } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
+      console.error("Error adding room:", error);
+      alert("Failed to add room. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteRoom = (id) => {
-    setRooms(rooms.filter((room) => room.id !== id));
+  // Delete a room
+  const deleteRoom = async (id) => {
+    try {
+      await deleteDoc(doc(db, "rooms", id));
+      setRooms(rooms.filter((room) => room.id !== id));
+    } catch (error) {
+      console.error("Error deleting room:", error);
+      alert("Failed to delete room. Please try again.");
+    }
   };
 
+  // Open edit modal and populate form data
   const openEditModal = (room) => {
     setFormData({
       id: room.id,
@@ -90,16 +119,34 @@ export default function AdminRoomManagement() {
     setIsEditModalOpen(true);
   };
 
+  // Edit an existing room
   const editRoom = async () => {
-    const updatedRooms = rooms.map((room) =>
-      room.id === formData.id ? { ...room, ...formData } : room
-    );
-    setRooms(updatedRooms);
-    setIsEditModalOpen(false); // Close modal after editing
+    try {
+      const roomRef = doc(db, "rooms", formData.id);
+      await updateDoc(roomRef, {
+        name: formData.name,
+        guests: parseInt(formData.guests),
+        wifi: formData.wifi,
+        bathroom: formData.bathroom,
+        status: formData.status,
+      });
+
+      // Update local state
+      const updatedRooms = rooms.map((room) =>
+        room.id === formData.id ? { ...room, ...formData } : room
+      );
+      setRooms(updatedRooms);
+
+      // Close modal
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error("Error updating room:", error);
+      alert("Failed to update room. Please try again.");
+    }
   };
 
   return (
-    <div className={`p-6 ${(isAddModalOpen || isEditModalOpen) ? 'blur-sm' : ''}`}>
+    <div className={`p-6 ${(isAddModalOpen || isEditModalOpen) ? "" : ""}`}>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Room Management</h1>
         <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2">

@@ -59,7 +59,7 @@ function AdminNavbar() {
             {/* Complaints */}
             <li>
               <NavLink
-                to="/admin/complaints"
+                to="/admin-home/complaints"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
                     isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
@@ -103,7 +103,7 @@ function AdminNavbar() {
                 <ul className="ml-6 mt-2 space-y-2">
                   <li>
                     <NavLink
-                      to="/admin/settings/general"
+                      to="/admin-home/settings/general"
                       className={({ isActive }) =>
                         `flex items-center justify-between p-2 rounded-lg text-lg font-medium transition ${
                           isActive ? "bg-orange-300 text-white" : "hover:bg-gray-200 text-black"
@@ -116,7 +116,7 @@ function AdminNavbar() {
                   </li>
                   <li>
                     <NavLink
-                      to="/admin/settings/account"
+                      to="/admin-home/settings/account"
                       className={({ isActive }) =>
                         `flex items-center justify-between p-2 rounded-lg text-lg font-medium transition ${
                           isActive ? "bg-orange-300 text-white" : "hover:bg-gray-200 text-black"

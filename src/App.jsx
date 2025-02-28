@@ -8,6 +8,8 @@ import Admin from './Admin/Admin';
 import Staff from './Staff Side/Staff';
 import Home from './Staff Side/Home';
 import AdminRoomManagement from './Admin/AdminRoomManagement';
+import AdminComplaints from './Admin/AdminComplaints';
+import AdminSetting from './Admin/AdminSettings';
 
 
 const App = () => {
@@ -26,6 +28,8 @@ const App = () => {
 
           <Route index element={<AdminHome />} />
           <Route path='room-management' element={ <AdminRoomManagement/>} />
+          <Route path='complaints' element={ <AdminComplaints/>} />
+          <Route path='settings' element={ <AdminSetting/>} />
           {/* Add more nested routes here if needed */}
 
         </Route>

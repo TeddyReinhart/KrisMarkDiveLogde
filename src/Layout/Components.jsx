@@ -28,7 +28,7 @@ export function CardContent({ children }) {
 // ✅ Dialog Components
 export function Dialog({ open, onOpenChange, children }) {
   return open ? (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm ">
       <div className="bg-white p-4 rounded-lg relative">{children}</div>
       <button className="absolute top-2 right-2 text-gray-500" onClick={() => onOpenChange(false)}>✖</button>
     </div>
