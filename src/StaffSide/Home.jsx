@@ -1,15 +1,33 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CalendarComponent from "./CalendarComponent";
-import room1 from "../images/room1.png";
-import room2 from "../images/room2.png";
-import room3 from "../images/room3.png";
-import room4 from "../images/room4.png";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../Firebase/Firebase"; // Adjust the path to your firebase.js file
 
 function Home() {
   const [date, setDate] = useState(new Date());
   const navigate = useNavigate();
   const [selectedRoom, setSelectedRoom] = useState(null); // No room selected by default
+  const [rooms, setRooms] = useState([]); // State to store rooms
+
+  // Fetch rooms from Firestore
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsCollection = collection(db, "rooms"); // Reference the "rooms" collection
+        const roomsSnapshot = await getDocs(roomsCollection); // Fetch documents from the collection
+        const roomsData = roomsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setRooms(roomsData); // Update state with fetched rooms
+      } catch (error) {
+        console.error("Error fetching rooms: ", error);
+      }
+    };
+
+    fetchRooms();
+  }, []);
 
   // Handle button click to navigate to either new-booking or booking page
   const handleButtonClick = (action) => {
@@ -22,7 +40,7 @@ function Home() {
 
   // Navigate to Room Availability page
   const handleRoomAvailability = () => {
-    navigate("/room-availability");
+    navigate("/home/rooms-availability");
   };
 
   return (
@@ -46,30 +64,16 @@ function Home() {
             </button>
           </div>
           <div className="flex flex-col gap-8">
-            <RoomCard
-              image={room1}
-              name="Standard Double Room"
-              onSelect={() => setSelectedRoom({ name: "Standard Double Room", image: room1 })}
-              isSelected={selectedRoom?.name === "Standard Double Room"}
-            />
-            <RoomCard
-              image={room2}
-              name="Triple Room"
-              onSelect={() => setSelectedRoom({ name: "Triple Room", image: room2 })}
-              isSelected={selectedRoom?.name === "Triple Room"}
-            />
-            <RoomCard
-              image={room3}
-              name="Twin Room"
-              onSelect={() => setSelectedRoom({ name: "Twin Room", image: room3 })}
-              isSelected={selectedRoom?.name === "Twin Room"}
-            />
-            <RoomCard
-              image={room4}
-              name="Family Room"
-              onSelect={() => setSelectedRoom({ name: "Family Room", image: room4 })}
-              isSelected={selectedRoom?.name === "Family Room"}
-            />
+            {rooms.map((room) => (
+              <RoomCard
+                key={room.id}
+                image={room.image}
+                name={room.name}
+                status={room.status} // Pass the status prop
+                onSelect={() => setSelectedRoom({ name: room.name, image: room.image })}
+                isSelected={selectedRoom?.name === room.name}
+              />
+            ))}
           </div>
         </div>
 
@@ -105,15 +109,32 @@ function Home() {
 }
 
 // Room Card Component
-function RoomCard({ image, name, onSelect, isSelected }) {
+function RoomCard({ image, name, status, onSelect, isSelected }) {
+  const isOccupied = status === "Occupied"; // Check if the room is occupied
+
   return (
     <div
-      onClick={onSelect}
+      onClick={isOccupied ? undefined : onSelect} // Disable onClick if the room is occupied
       className={`cursor-pointer p-6 rounded-lg flex flex-col items-center shadow-lg transition-all duration-200 
-        ${isSelected ? "bg-orange-200 ring-4 ring-orange-400" : "bg-gray-200 hover:bg-orange-100"}`}
+        ${
+          isOccupied
+            ? "bg-gray-400 cursor-not-allowed" // Disabled style for occupied rooms
+            : isSelected
+            ? "bg-orange-200 ring-4 ring-orange-400" // Selected style
+            : "bg-gray-200 hover:bg-orange-100" // Default style
+        }`}
     >
-      <img src={image} alt={name} className="w-full h-48 object-cover rounded-lg" />
+      <img
+        src={image}
+        alt={name}
+        className={`w-full h-48 object-cover rounded-lg ${
+          isOccupied ? "opacity-50" : "" // Reduce opacity for occupied rooms
+        }`}
+      />
       <h4 className="mt-4 text-lg font-bold text-center">{name}</h4>
+      {isOccupied && (
+        <p className="mt-2 text-red-600 font-semibold">Occupied</p> // Show "Occupied" text
+      )}
     </div>
   );
 }

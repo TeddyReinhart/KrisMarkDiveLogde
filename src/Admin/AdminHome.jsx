@@ -1,102 +1,211 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-
-// Booking Data (Includes room types)
-const bookingData = [
-  { month: "January", standardDouble: 20, triple: 10, twin: 8, family: 7, revenue: 50000, guests: 200 },
-  { month: "February", standardDouble: 25, triple: 12, twin: 10, family: 9, revenue: 48000, guests: 220 },
-  { month: "March", standardDouble: 22, triple: 14, twin: 11, family: 8, revenue: 46000, guests: 210 },
-  { month: "April", standardDouble: 28, triple: 15, twin: 12, family: 10, revenue: 53000, guests: 250 },
-  { month: "May", standardDouble: 30, triple: 18, twin: 14, family: 12, revenue: 60000, guests: 270 },
-  { month: "June", standardDouble: 35, triple: 20, twin: 16, family: 14, revenue: 67000, guests: 300 },
-  { month: "July", standardDouble: 40, triple: 22, twin: 18, family: 16, revenue: 74000, guests: 320 },
-  { month: "August", standardDouble: 38, triple: 21, twin: 17, family: 15, revenue: 78000, guests: 330 },
-  { month: "September", standardDouble: 33, triple: 19, twin: 15, family: 13, revenue: 69000, guests: 280 },
-  { month: "October", standardDouble: 28, triple: 17, twin: 13, family: 11, revenue: 62000, guests: 260 },
-  { month: "November", standardDouble: 25, triple: 15, twin: 12, family: 10, revenue: 58000, guests: 240 },
-  { month: "December", standardDouble: 22, triple: 13, twin: 11, family: 9, revenue: 55000, guests: 230 },
-];
-
-// Function to get the most booked room type
-const getMostBookedRoomType = () => {
-  const totalBookings = { standardDouble: 0, triple: 0, twin: 0, family: 0 };
-
-  // Sum all bookings for each room type
-  bookingData.forEach((data) => {
-    totalBookings.standardDouble += data.standardDouble;
-    totalBookings.triple += data.triple;
-    totalBookings.twin += data.twin;
-    totalBookings.family += data.family;
-  });
-
-  // Get the most booked room type
-  const mostBooked = Object.keys(totalBookings).reduce((a, b) =>
-    totalBookings[a] > totalBookings[b] ? a : b
-  );
-
-  const roomNames = {
-    standardDouble: "Standard Double Room",
-    triple: "Triple Room",
-    twin: "Twin Room",
-    family: "Family Room",
-  };
-
-  return roomNames[mostBooked]; // Return room type name
-};
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../Firebase/Firebase";
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine } from "react-icons/fa"; // Icons for cards and charts
 
 const AdminHome = () => {
   const navigate = useNavigate();
+  const [bookingData, setBookingData] = useState([]);
+  const [revenueData, setRevenueData] = useState([]); // State for revenue data
+  const [mostBookedRoomType, setMostBookedRoomType] = useState("");
+  const [metrics, setMetrics] = useState({
+    totalBookings: 0, // Total number of bookings from bookingHistory
+    totalRevenue: 0, // Total revenue from bookingHistory
+    pendingPayments: 0, // Total entries in the bookings collection
+  });
+
+  // Fetch room types, booking history, and bookings data from Firestore
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch room types from the "rooms" collection
+        const roomsSnapshot = await getDocs(collection(db, "rooms"));
+        const rooms = roomsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Fetch booking history from the "bookingHistory" collection
+        const bookingsHistorySnapshot = await getDocs(collection(db, "bookingHistory"));
+        const bookingsHistory = bookingsHistorySnapshot.docs.map((doc) => doc.data());
+
+        // Fetch bookings from the "bookings" collection
+        const bookingsSnapshot = await getDocs(collection(db, "bookings"));
+        const bookings = bookingsSnapshot.docs.map((doc) => doc.data());
+
+        // Initialize room totals
+        const roomTotals = {};
+        rooms.forEach((room) => {
+          roomTotals[room.name] = { bookings: 0, revenue: 0 };
+        });
+
+        // Calculate bookings and revenue for each room type
+        bookingsHistory.forEach((booking) => {
+          const roomName = booking.roomDetails?.name;
+          if (roomTotals[roomName]) {
+            roomTotals[roomName].bookings += 1;
+            roomTotals[roomName].revenue += booking.paymentDetails?.totalAmount || 0;
+          }
+        });
+
+        // Convert to array format for Recharts
+        const dataArray = Object.keys(roomTotals).map((roomName) => ({
+          name: roomName,
+          bookings: roomTotals[roomName].bookings,
+          revenue: roomTotals[roomName].revenue,
+        }));
+
+        setBookingData(dataArray);
+
+        // Calculate most booked room type
+        const mostBooked = Object.keys(roomTotals).reduce((a, b) =>
+          roomTotals[a].bookings > roomTotals[b].bookings ? a : b
+        );
+
+        setMostBookedRoomType(mostBooked);
+
+        // Calculate total bookings and revenue from bookingHistory
+        const totalBookings = bookingsHistory.length;
+        const totalRevenue = bookingsHistory.reduce(
+          (sum, booking) => sum + (booking.paymentDetails?.totalAmount || 0),
+          0
+        );
+
+        // Calculate pending payments (total entries in the bookings collection)
+        const pendingPayments = bookings.length;
+
+        // Update metrics
+        setMetrics({
+          totalBookings,
+          totalRevenue,
+          pendingPayments,
+        });
+
+        // Process revenue data for the line chart (group by month)
+        const revenueByMonth = {};
+        bookingsHistory.forEach((booking) => {
+          const checkInDate = new Date(booking.checkInDate);
+          const month = checkInDate.toLocaleString("default", { month: "short", year: "numeric" });
+
+          if (!revenueByMonth[month]) {
+            revenueByMonth[month] = 0;
+          }
+          revenueByMonth[month] += booking.paymentDetails?.totalAmount || 0;
+        });
+
+        // Convert to array format for Recharts
+        const revenueArray = Object.keys(revenueByMonth).map((month) => ({
+          month,
+          revenue: revenueByMonth[month],
+        }));
+
+        setRevenueData(revenueArray);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Data for the pie chart (bookings by room type)
+  const pieChartData = bookingData.map((room) => ({
+    name: room.name,
+    value: room.bookings,
+  }));
+
+  // Colors for the pie chart
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-100 p-6">
-      {/* Top Section: Most Booked Room Type (Left) & Check Room Availability (Right) */}
-      <div className="w-full max-w-4xl flex justify-between items-center mb-6">
-        {/* Most Booked Room Type */}
-        <div className="bg-white p-6 shadow-md rounded-lg w-80 text-center">
-          <h3 className="text-xl font-semibold mb-2 text-gray-800">Most Booked Room Type</h3>
-          <p className="text-2xl font-bold text-orange-500">{getMostBookedRoomType()}</p>
+      {/* Header Section */}
+      <div className="w-full max-w-6xl mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+        <p className="text-gray-600">Welcome back! Here's an overview of your bookings and revenue.</p>
+      </div>
+
+      {/* Top Section: Metrics Cards */}
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Total Bookings */}
+        <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center mb-4">
+            <FaUsers className="text-4xl text-blue-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Total Bookings</h3>
+          <p className="text-2xl font-bold text-blue-500">{metrics.totalBookings}</p>
         </div>
 
-        {/* Check Room Availability Button */}
-        <button
-          onClick={() => navigate("/admin/room-availability")}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-md shadow-md"
-        >
-          Check Room Availability
-        </button>
+        {/* Total Revenue */}
+        <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center mb-4">
+            <FaMoneyBillAlt className="text-4xl text-green-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Total Revenue ($)</h3>
+          <p className="text-2xl font-bold text-green-500">{metrics.totalRevenue}</p>
+        </div>
+
+        {/* Pending Payments */}
+        <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center mb-4">
+            <FaClock className="text-4xl text-yellow-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Pending Payments ($)</h3>
+          <p className="text-2xl font-bold text-yellow-500">{metrics.pendingPayments}</p>
+        </div>
       </div>
 
-      {/* Room Bookings by Type */}
-      <div className="bg-white p-6 shadow-md rounded-lg w-full max-w-4xl mb-6">
-        <h3 className="text-xl font-semibold mb-4 text-center">Room Bookings by Type</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={bookingData}>
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="standardDouble" stroke="blue" name="Standard Double Room" />
-            <Line type="monotone" dataKey="triple" stroke="red" name="Triple Room" />
-            <Line type="monotone" dataKey="twin" stroke="green" name="Twin Room" />
-            <Line type="monotone" dataKey="family" stroke="purple" name="Family Room" />
-          </LineChart>
-        </ResponsiveContainer>
+      {/* Charts Section */}
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Room Bookings (Pie Chart) */}
+        <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+            <FaChartPie className="mr-2 text-blue-500" /> Room Bookings Distribution
+          </h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                data={pieChartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={150}
+                fill="#8884d8"
+                label
+              >
+                {pieChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Room Revenue (Line Chart) */}
+        <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+            <FaChartLine className="mr-2 text-green-500" /> Room Revenue Over Time
+          </h3>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={revenueData}>
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="revenue" stroke="#00C49F" name="Revenue (₱)" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Revenue & Guest Count */}
-      <div className="bg-white p-6 shadow-md rounded-lg w-full max-w-4xl">
-        <h3 className="text-xl font-semibold mb-4 text-center">Monthly Revenue and Guest Count</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={bookingData}>
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="revenue" stroke="green" name="Revenue (Month)" />
-            <Line type="monotone" dataKey="guests" stroke="gold" name="Total Guests (Month)" />
-          </LineChart>
-        </ResponsiveContainer>
+      {/* Footer Section */}
+      <div className="w-full max-w-6xl text-center text-gray-600 mt-8">
+        <p>© 2023 Admin Dashboard. All rights reserved.</p>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { auth ,db} from './Firebase/Firebase';
-import { doc,getDoc } from 'firebase/firestore';;
+import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { auth, db } from "./Firebase/Firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const ProtectedRoutes = ({ children, requiredRole }) => {
   const [userRole, setUserRole] = useState(null);
@@ -12,14 +12,14 @@ const ProtectedRoutes = ({ children, requiredRole }) => {
     const fetchUserRole = async () => {
       if (user) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
             setUserRole(userDoc.data().role);
           } else {
             setUserRole(null);
           }
         } catch (error) {
-          console.error('Error fetching user role:', error);
+          console.error("Error fetching user role:", error);
           setUserRole(null);
         }
       } else {

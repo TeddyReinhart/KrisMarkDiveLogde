@@ -16,20 +16,33 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Step 1: Check authentication state on component mount
+  // ✅ UseEffect: Check Authentication State
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // User is signed in, redirect to a default page (e.g., admin-home)
-        navigate("/admin-home", { replace: true });
-      } else {
-        // User is not signed in, stay on the login page
-        console.log("No user is signed in.");
+        console.log("User already signed in:", user.uid);
+
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (!userDoc.exists()) {
+            throw new Error("User data not found.");
+          }
+
+          const role = userDoc.data().role;
+          console.log("Detected user role:", role);
+
+          if (role === "admin") {
+            navigate("/admin-home", { replace: true });
+          } else {
+            navigate("/home", { replace: true });
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+        }
       }
     });
 
-    // Cleanup the observer when the component unmounts
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup observer on unmount
   }, [navigate]);
 
   // Function to map Firebase error codes to user-friendly messages
@@ -51,20 +64,17 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     if (!email || !password) {
       setError("Please fill all fields.");
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    // Validate password length
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
@@ -74,37 +84,26 @@ const Login = () => {
     setError("");
 
     try {
-      // Step 2: Sign in with Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("User signed in:", user);
 
-      // Step 3: Fetch user role from Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      console.log("Firestore document:", userDoc.data());
-
       if (!userDoc.exists()) {
         throw new Error("User data not found. Please contact support.");
       }
 
-      const userData = userDoc.data();
-      const role = userData.role;
+      const role = userDoc.data().role;
       console.log("User role:", role);
 
-      // Step 4: Redirect based on role
-      switch (role) {
-        case "admin":
-          navigate("/admin-home", { replace: true });
-          break;
-        case "staff":
-          navigate("/home", { replace: true });
-          break;
-        default:
-          throw new Error("Invalid role.");
+      if (role === "admin") {
+        navigate("/admin-home", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError(getErrorMessage(error.code)); // Use user-friendly error message
+      setError(getErrorMessage(error.code));
     } finally {
       setLoading(false);
     }

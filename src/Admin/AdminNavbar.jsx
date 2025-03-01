@@ -86,6 +86,48 @@ function AdminNavbar() {
               </NavLink>
             </li>
 
+            <li>
+              <NavLink
+                to="/admin-home/admin-rooms-availablity"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
+                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
+                  }`
+                }
+              >
+                <HousePlus className="w-6 h-6" />
+                <span>Room Availability</span>
+              </NavLink>
+            </li>
+
+            <li>
+              <NavLink
+                to="/admin-home/create-user"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
+                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
+                  }`
+                }
+              >
+                <HousePlus className="w-6 h-6" />
+                <span>create user</span>
+              </NavLink>
+            </li>
+
+            <li>
+              <NavLink
+                to="/admin-home/reports"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
+                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
+                  }`
+                }
+              >
+                <HousePlus className="w-6 h-6" />
+                <span>reports</span>
+              </NavLink>
+            </li>
+
             {/* Settings Dropdown */}
             <li>
               <div
