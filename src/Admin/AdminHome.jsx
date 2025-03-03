@@ -26,6 +26,11 @@ const AdminHome = () => {
   const [type, setType] = useState("Expense"); // State for expense type
   const [loading, setLoading] = useState(false); // Loading state
 
+  // Time Period Filter State
+  const [timePeriod, setTimePeriod] = useState("monthly"); // "monthly" or "yearly"
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Default to current month (YYYY-MM)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString()); // Default to current year
+
   // Fetch room types, booking history, bookings data, complaints, and expenses from Firestore
   useEffect(() => {
     const fetchData = async () => {
@@ -40,6 +45,16 @@ const AdminHome = () => {
         // Fetch booking history from the "bookingHistory" collection
         const bookingsHistorySnapshot = await getDocs(collection(db, "bookingHistory"));
         const bookingsHistory = bookingsHistorySnapshot.docs.map((doc) => doc.data());
+
+        // Filter bookings based on the selected time period
+        const filteredBookings = bookingsHistory.filter((booking) => {
+          const checkInDate = new Date(booking.checkInDate);
+          if (timePeriod === "monthly") {
+            return checkInDate.toISOString().slice(0, 7) === selectedMonth;
+          } else {
+            return checkInDate.getFullYear().toString() === selectedYear;
+          }
+        });
 
         // Fetch bookings from the "bookings" collection
         const bookingsSnapshot = await getDocs(collection(db, "bookings"));
@@ -67,7 +82,7 @@ const AdminHome = () => {
         });
 
         // Calculate bookings and revenue for each room type
-        bookingsHistory.forEach((booking) => {
+        filteredBookings.forEach((booking) => {
           const roomName = booking.roomDetails?.name;
           if (roomTotals[roomName]) {
             roomTotals[roomName].bookings += 1;
@@ -91,9 +106,9 @@ const AdminHome = () => {
 
         setMostBookedRoomType(mostBooked);
 
-        // Calculate total bookings and revenue from bookingHistory
-        const totalBookings = bookingsHistory.length;
-        const totalRevenue = bookingsHistory.reduce(
+        // Calculate total bookings and revenue from filtered bookings
+        const totalBookings = filteredBookings.length;
+        const totalRevenue = filteredBookings.reduce(
           (sum, booking) => sum + (booking.paymentDetails?.totalAmount || 0),
           0
         );
@@ -114,22 +129,25 @@ const AdminHome = () => {
           monthlyNetIncome, // Add monthly net income to metrics
         });
 
-        // Process revenue data for the line chart (group by month)
-        const revenueByMonth = {};
-        bookingsHistory.forEach((booking) => {
+        // Process revenue data for the line chart (group by month or year)
+        const revenueByTime = {};
+        filteredBookings.forEach((booking) => {
           const checkInDate = new Date(booking.checkInDate);
-          const month = checkInDate.toLocaleString("default", { month: "short", year: "numeric" });
+          const timeKey =
+            timePeriod === "monthly"
+              ? checkInDate.toLocaleString("default", { month: "short", year: "numeric" })
+              : checkInDate.getFullYear().toString();
 
-          if (!revenueByMonth[month]) {
-            revenueByMonth[month] = 0;
+          if (!revenueByTime[timeKey]) {
+            revenueByTime[timeKey] = 0;
           }
-          revenueByMonth[month] += booking.paymentDetails?.totalAmount || 0;
+          revenueByTime[timeKey] += booking.paymentDetails?.totalAmount || 0;
         });
 
         // Convert to array format for Recharts
-        const revenueArray = Object.keys(revenueByMonth).map((month) => ({
-          month,
-          revenue: revenueByMonth[month],
+        const revenueArray = Object.keys(revenueByTime).map((timeKey) => ({
+          timeKey,
+          revenue: revenueByTime[timeKey],
         }));
 
         setRevenueData(revenueArray);
@@ -139,7 +157,7 @@ const AdminHome = () => {
     };
 
     fetchData();
-  }, []);
+  }, [timePeriod, selectedMonth, selectedYear]); // Re-fetch data when time period, month, or year changes
 
   // Handle expense form submission
   const handleExpenseSubmit = async (e) => {
@@ -194,9 +212,35 @@ const AdminHome = () => {
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-100 p-6">
       {/* Header Section */}
-      <div className="w-full max-w-6xl mb-8">
+      <div className="w-full max-w-6xl mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's an overview of your bookings, revenue, expenses, and net income.</p>
+        <div className="flex items-center space-x-4">
+          <select
+            value={timePeriod}
+            onChange={(e) => setTimePeriod(e.target.value)}
+            className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          {timePeriod === "monthly" ? (
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+            />
+          ) : (
+            <input
+              type="number"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              min="2020"
+              max={new Date().getFullYear()}
+              className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+            />
+          )}
+        </div>
       </div>
 
       {/* Top Section: Metrics Cards */}
@@ -334,7 +378,7 @@ const AdminHome = () => {
           </h3>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={revenueData}>
-              <XAxis dataKey="month" />
+              <XAxis dataKey="timeKey" />
               <YAxis />
               <Tooltip />
               <Legend />
