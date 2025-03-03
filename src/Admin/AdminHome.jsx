@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine, FaExclamationCircle } from "react-icons/fa"; // Added FaExclamationCircle for complaints icon
+import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine, FaExclamationCircle, FaMoneyCheckAlt, FaCoins } from "react-icons/fa"; // Added FaCoins for net income
 
 const AdminHome = () => {
   const navigate = useNavigate();
@@ -15,9 +15,18 @@ const AdminHome = () => {
     totalRevenue: 0, // Total revenue from bookingHistory
     pendingPayments: 0, // Total entries in the bookings collection
     totalComplaints: 0, // Total number of complaints
+    totalExpenses: 0, // Total expenses
+    monthlyNetIncome: 0, // Monthly net income
   });
 
-  // Fetch room types, booking history, bookings data, and complaints from Firestore
+  // Expense Tracker State
+  const [expenses, setExpenses] = useState([]); // State to store expenses
+  const [title, setTitle] = useState(""); // State for expense title
+  const [amount, setAmount] = useState(""); // State for expense amount
+  const [type, setType] = useState("Expense"); // State for expense type
+  const [loading, setLoading] = useState(false); // Loading state
+
+  // Fetch room types, booking history, bookings data, complaints, and expenses from Firestore
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,6 +48,17 @@ const AdminHome = () => {
         // Fetch complaints from the "complaintReports" collection
         const complaintsSnapshot = await getDocs(collection(db, "complaintReports"));
         const totalComplaints = complaintsSnapshot.size; // Total number of complaints
+
+        // Fetch expenses from the "expenses" collection
+        const expensesSnapshot = await getDocs(collection(db, "expenses"));
+        const expensesData = expensesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setExpenses(expensesData);
+
+        // Calculate total expenses
+        const totalExpenses = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
         // Initialize room totals
         const roomTotals = {};
@@ -81,12 +101,17 @@ const AdminHome = () => {
         // Calculate pending payments (total entries in the bookings collection)
         const pendingPayments = bookings.length;
 
+        // Calculate monthly net income
+        const monthlyNetIncome = totalRevenue - totalExpenses;
+
         // Update metrics
         setMetrics({
           totalBookings,
           totalRevenue,
           pendingPayments,
           totalComplaints, // Add total complaints to metrics
+          totalExpenses, // Add total expenses to metrics
+          monthlyNetIncome, // Add monthly net income to metrics
         });
 
         // Process revenue data for the line chart (group by month)
@@ -116,6 +141,47 @@ const AdminHome = () => {
     fetchData();
   }, []);
 
+  // Handle expense form submission
+  const handleExpenseSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !amount) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Add expense to Firestore
+      await addDoc(collection(db, "expenses"), {
+        title,
+        amount: parseFloat(amount),
+        type,
+        createdAt: new Date().toISOString(),
+      });
+
+      // Reset form and fetch updated expenses
+      setTitle("");
+      setAmount("");
+      setType("Expense");
+      const expensesSnapshot = await getDocs(collection(db, "expenses"));
+      const expensesData = expensesSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setExpenses(expensesData);
+
+      // Update total expenses and monthly net income in metrics
+      const totalExpenses = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+      const monthlyNetIncome = metrics.totalRevenue - totalExpenses;
+      setMetrics((prev) => ({ ...prev, totalExpenses, monthlyNetIncome }));
+    } catch (error) {
+      console.error("Error adding expense: ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Data for the pie chart (bookings by room type)
   const pieChartData = bookingData.map((room) => ({
     name: room.name,
@@ -130,11 +196,11 @@ const AdminHome = () => {
       {/* Header Section */}
       <div className="w-full max-w-6xl mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's an overview of your bookings, revenue, and complaints.</p>
+        <p className="text-gray-600">Welcome back! Here's an overview of your bookings, revenue, expenses, and net income.</p>
       </div>
 
       {/* Top Section: Metrics Cards */}
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         {/* Total Bookings */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
@@ -170,12 +236,69 @@ const AdminHome = () => {
           <h3 className="text-lg font-semibold text-gray-800">Total Complaints</h3>
           <p className="text-2xl font-bold text-red-500">{metrics.totalComplaints}</p>
         </div>
+
+        {/* Monthly Net Income */}
+        <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center mb-4">
+            <FaCoins className="text-4xl text-purple-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Monthly Net Income ($)</h3>
+          <p className="text-2xl font-bold text-purple-500">{metrics.monthlyNetIncome}</p>
+        </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Room Bookings (Pie Chart) */}
+      {/* Middle Section: Expense Tracker and Charts */}
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Expense Tracker Card */}
         <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+            <FaMoneyCheckAlt className="mr-2 text-purple-500" /> Expense Tracker
+          </h3>
+          <form onSubmit={handleExpenseSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter title"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Type</label>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="Expense">Expense</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-purple-500 text-white p-2 rounded-lg hover:bg-purple-600 transition-all"
+            >
+              {loading ? "Adding..." : "Add Expense"}
+            </button>
+          </form>
+        </div>
+
+        {/* Room Bookings (Pie Chart) */}
+        <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow md:col-span-2">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
             <FaChartPie className="mr-2 text-blue-500" /> Room Bookings Distribution
           </h3>
@@ -200,7 +323,10 @@ const AdminHome = () => {
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
 
+      {/* Bottom Section: Room Revenue Line Chart and Expense History */}
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Room Revenue (Line Chart) */}
         <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
@@ -215,6 +341,33 @@ const AdminHome = () => {
               <Line type="monotone" dataKey="revenue" stroke="#00C49F" name="Revenue (₱)" />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Expense History */}
+        <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+            <FaMoneyCheckAlt className="mr-2 text-purple-500" /> Expense History
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-2 text-left text-sm font-semibold text-gray-700">Title</th>
+                  <th className="p-2 text-left text-sm font-semibold text-gray-700">Amount</th>
+                  <th className="p-2 text-left text-sm font-semibold text-gray-700">Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.map((expense) => (
+                  <tr key={expense.id} className="hover:bg-gray-50">
+                    <td className="p-2 text-sm text-gray-700">{expense.title}</td>
+                    <td className="p-2 text-sm text-gray-700">₱ {expense.amount}</td>
+                    <td className="p-2 text-sm text-gray-700">{expense.type}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

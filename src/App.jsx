@@ -4,7 +4,6 @@ import {
   Routes,
   Route,
   Navigate,
-  Outlet,
 } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Admin/Register";
@@ -21,6 +20,7 @@ import BookHistory from "./StaffSide/BookHistory";
 import Reports from "./Admin/Reports";
 import ComplaintReportForm from './ComplaintReportForm';
 import ReportsTable from './Admin/ReportsTable';
+
 
 const App = () => {
   return (
