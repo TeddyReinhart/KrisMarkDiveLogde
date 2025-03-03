@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine } from "react-icons/fa"; // Icons for cards and charts
+import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine, FaExclamationCircle } from "react-icons/fa"; // Added FaExclamationCircle for complaints icon
 
 const AdminHome = () => {
   const navigate = useNavigate();
@@ -14,9 +14,10 @@ const AdminHome = () => {
     totalBookings: 0, // Total number of bookings from bookingHistory
     totalRevenue: 0, // Total revenue from bookingHistory
     pendingPayments: 0, // Total entries in the bookings collection
+    totalComplaints: 0, // Total number of complaints
   });
 
-  // Fetch room types, booking history, and bookings data from Firestore
+  // Fetch room types, booking history, bookings data, and complaints from Firestore
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -34,6 +35,10 @@ const AdminHome = () => {
         // Fetch bookings from the "bookings" collection
         const bookingsSnapshot = await getDocs(collection(db, "bookings"));
         const bookings = bookingsSnapshot.docs.map((doc) => doc.data());
+
+        // Fetch complaints from the "complaintReports" collection
+        const complaintsSnapshot = await getDocs(collection(db, "complaintReports"));
+        const totalComplaints = complaintsSnapshot.size; // Total number of complaints
 
         // Initialize room totals
         const roomTotals = {};
@@ -81,6 +86,7 @@ const AdminHome = () => {
           totalBookings,
           totalRevenue,
           pendingPayments,
+          totalComplaints, // Add total complaints to metrics
         });
 
         // Process revenue data for the line chart (group by month)
@@ -124,11 +130,11 @@ const AdminHome = () => {
       {/* Header Section */}
       <div className="w-full max-w-6xl mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's an overview of your bookings and revenue.</p>
+        <p className="text-gray-600">Welcome back! Here's an overview of your bookings, revenue, and complaints.</p>
       </div>
 
       {/* Top Section: Metrics Cards */}
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {/* Total Bookings */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
@@ -154,6 +160,15 @@ const AdminHome = () => {
           </div>
           <h3 className="text-lg font-semibold text-gray-800">Pending Payments ($)</h3>
           <p className="text-2xl font-bold text-yellow-500">{metrics.pendingPayments}</p>
+        </div>
+
+        {/* Total Complaints */}
+        <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-center mb-4">
+            <FaExclamationCircle className="text-4xl text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800">Total Complaints</h3>
+          <p className="text-2xl font-bold text-red-500">{metrics.totalComplaints}</p>
         </div>
       </div>
 
