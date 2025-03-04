@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, CalendarDays, User, Settings, LogOut } from "lucide-react";
+import { Home, CalendarDays, FileClock, FileText, Settings, LogOut } from "lucide-react";
 import logo from "../images/logo.png";
 import { signOut } from "firebase/auth";
 import { auth } from "../Firebase/Firebase";
@@ -37,17 +37,18 @@ function Navbar() {
           <ul className="w-full">
             {/* Home */}
             <li className="mb-4">
-              <NavLink
-                to="/home"
-                className={({ isActive }) =>
-                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
-                    isActive ? "bg-orange-500 text-white" : "text-gray-700"
-                  }`
-                }
-              >
-                <Home className="w-6 h-6" />
-                <span>Home</span>
-              </NavLink>
+             <NavLink
+              to="/home" 
+              end
+              className={({ isActive }) =>
+                `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
+                  isActive ? "bg-orange-500 text-white" : "text-gray-700"
+                }`
+              }
+            >
+              <Home className="w-6 h-6" />
+              <span>Home</span>
+            </NavLink>
             </li>
 
             {/* Booking */}
@@ -65,7 +66,7 @@ function Navbar() {
               </NavLink>
             </li>
 
-            {/* Guest */}
+            {/* Booking History */}
             <li className="mb-4">
               <NavLink
                 to="/home/book-history"
@@ -75,8 +76,23 @@ function Navbar() {
                   }`
                 }
               >
-                <CalendarDays className="w-6 h-6" />
+                <FileClock className="w-6 h-6" />
                 <span>Booking History</span>
+              </NavLink>
+            </li>
+
+            {/* Reports */}
+            <li className="mb-4">
+              <NavLink
+                to="/home/reports"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
+                    isActive ? "bg-orange-500 text-white" : "text-gray-700"
+                  }`
+                }
+              >
+                <FileText className="w-6 h-6" />
+                <span>Reports</span>
               </NavLink>
             </li>
 

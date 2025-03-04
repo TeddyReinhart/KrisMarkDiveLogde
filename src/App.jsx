@@ -67,6 +67,7 @@ const App = () => {
           />
           <Route path="book-rooms" element={<BookRooms />} />
           <Route path="book-history" element={<BookHistory />} />
+          <Route path="reports" element={<Reports />} />
         </Route>
 
         {/* Default Redirect to Login */}

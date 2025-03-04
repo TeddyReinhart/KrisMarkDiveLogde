@@ -12,6 +12,10 @@ const BookHistory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isLoading, setIsLoading] = useState(true); // State to indicate loading
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Number of items per page
+
   // Fetch booking history from Firestore
   const fetchBookingHistory = async () => {
     setIsLoading(true);
@@ -63,6 +67,7 @@ const BookHistory = () => {
       return matchesSearch && matchesFilter;
     });
     setFilteredBookings(filtered);
+    setCurrentPage(1); // Reset to the first page after filtering
   };
 
   // Export to Excel
@@ -85,18 +90,29 @@ const BookHistory = () => {
     setSelectedBooking(null);
   };
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Booking History</h1>
 
       {/* Filter and Search Bar */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4">
+      <div className="mb-8 flex flex-col md:flex-row gap-4 justify-end">
         <input
           type="text"
-          placeholder="Search by room, guest name, or email..."
+          placeholder="Search here"
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={filter}
@@ -104,9 +120,11 @@ const BookHistory = () => {
           className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Rooms</option>
-          <option value="Deluxe Room">Deluxe Room</option>
-          <option value="Standard Room">Standard Room</option>
-          <option value="Suite">Suite</option>
+          {Array.from(new Set(bookings.map((booking) => booking.roomDetails?.name))).map((roomName) => (
+            <option key={roomName} value={roomName}>
+              {roomName}
+            </option>
+          ))}
         </select>
         <button
           onClick={exportToExcel}
@@ -119,15 +137,15 @@ const BookHistory = () => {
       {/* Bookings Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
         <table className="min-w-full">
-          <thead className="bg-gray-100">
+          <thead className="bg-orange-500">
             <tr>
-              <th className="p-4 text-left text-gray-700 font-semibold">Room</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Check-in</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Check-out</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Guests</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Guest Name</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Email</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Check-out Time</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/8">Room</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/8">Check-in</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/8">Check-out</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/12">Guests</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/6">Guest Name</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/4">Email</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/6">Check-out Time</th>
             </tr>
           </thead>
           <tbody>
@@ -137,35 +155,73 @@ const BookHistory = () => {
                   Loading...
                 </td>
               </tr>
-            ) : filteredBookings.length === 0 ? (
+            ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="7" className="p-6 text-center text-gray-600">
                   No booking history found.
                 </td>
               </tr>
             ) : (
-              filteredBookings.map((booking) => (
+              currentBookings.map((booking) => (
                 <tr
                   key={booking.id}
                   className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => openModal(booking)}
                 >
-                  <td className="p-4 text-gray-700">{booking.selectedRoom}</td>
-                  <td className="p-4 text-gray-700">{booking.checkInDate}</td>
-                  <td className="p-4 text-gray-700">{booking.checkOutDate}</td>
-                  <td className="p-4 text-gray-700">{booking.numberOfGuests}</td>
-                  <td className="p-4 text-gray-700">
+                  <td className="p-4 text-gray-700 w-1/8">{booking.selectedRoom}</td>
+                  <td className="p-4 text-gray-700 w-1/8">{booking.checkInDate}</td>
+                  <td className="p-4 text-gray-700 w-1/8">{booking.checkOutDate}</td>
+                  <td className="p-4 text-gray-700 w-1/12">{booking.numberOfGuests}</td>
+                  <td className="p-4 text-gray-700 w-1/6">
                     {booking.guestInfo.firstName} {booking.guestInfo.lastName}
                   </td>
-                  <td className="p-4 text-gray-700">{booking.guestInfo.email}</td>
-                  <td className="p-4 text-gray-700">
-                    {booking.checkOutTimestamp?.toDate().toLocaleString()}
+                  <td className="p-4 text-gray-700 w-1/4">{booking.guestInfo.email}</td>
+                  <td className="p-4 text-gray-700 w-1/6">
+                    {booking.checkOutTimestamp?.toDate().toLocaleString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: '2-digit',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      second: '2-digit',
+                      hour12: true,
+                    })}
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-4 py-2 mx-1 text-gray-700 bg-gray-200 rounded-lg disabled:opacity-50"
+        >
+          Previous
+        </button>
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index + 1}
+            onClick={() => paginate(index + 1)}
+            className={`px-4 py-2 mx-1 ${
+              currentPage === index + 1 ? 'text-orange font-bold' : 'bg-gray-200 text-gray-700'
+            } rounded-lg`}
+          >
+            {index + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 mx-1 text-gray-700 bg-gray-200 rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
 
       {/* Modal for Full Details */}

@@ -11,7 +11,7 @@ const CalendarComponent = ({ date, setDate }) => {
       </div>
       <Calendar onChange={setDate} value={date} className="react-calendar" />
       <div className="mt-4">
-        <p className="text-sm font-bold">Selected Date:</p>
+        <p className="text-sm font-bold">Today's Date :</p>
         <p className="text-sm text-gray-600">{date.toDateString()}</p>
       </div>
     </aside>

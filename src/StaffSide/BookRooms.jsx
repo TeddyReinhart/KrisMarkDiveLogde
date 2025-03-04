@@ -18,6 +18,10 @@ const BookRooms = () => {
     gcashNumber: "", // Only required if paymentMethod is gcash
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Number of items per page
+
   // Fetch bookings from Firestore
   const fetchBookings = async () => {
     setIsLoading(true);
@@ -71,6 +75,7 @@ const BookRooms = () => {
       return matchesSearch && matchesFilter;
     });
     setFilteredBookings(filtered);
+    setCurrentPage(1); // Reset to the first page after filtering
   };
 
   // Handle Check-out button click
@@ -159,18 +164,29 @@ const BookRooms = () => {
   // Get the selected booking for the payment modal
   const selectedBookingData = filteredBookings.find((b) => b.id === selectedBooking);
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Manage Bookings</h1>
 
       {/* Filter and Search Bar */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4">
+      <div className="mb-8 flex flex-col md:flex-row gap-4 justify-end">
         <input
           type="text"
-          placeholder="Search by room, guest name, or email..."
+          placeholder="Search here"
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={filter}
@@ -189,15 +205,15 @@ const BookRooms = () => {
       {/* Bookings Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
         <table className="min-w-full">
-          <thead className="bg-gray-100">
+          <thead className="bg-orange-500">
             <tr>
-              <th className="p-4 text-left text-gray-700 font-semibold">Room</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Check-in</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Check-out</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Guests</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Guest Name</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Email</th>
-              <th className="p-4 text-left text-gray-700 font-semibold">Actions</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Room</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Check-in</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Check-out</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Guests</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Guest Name</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Email</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -207,14 +223,14 @@ const BookRooms = () => {
                   Loading...
                 </td>
               </tr>
-            ) : filteredBookings.length === 0 ? (
+            ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="7" className="p-6 text-center text-gray-600">
                   No bookings found.
                 </td>
               </tr>
             ) : (
-              filteredBookings.map((booking) => (
+              currentBookings.map((booking) => (
                 <tr
                   key={booking.id}
                   className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -234,7 +250,7 @@ const BookRooms = () => {
                         e.stopPropagation(); // Prevent row click event
                         handleCheckOutClick(booking.id);
                       }}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors"
                     >
                       Check-out
                     </button>
@@ -244,6 +260,35 @@ const BookRooms = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-4 py-2 mx-1 text-gray-700 bg-gray-200 rounded-lg disabled:opacity-50"
+        >
+          Previous
+        </button>
+        {Array.from({ length: totalPages }, (_, index) => (
+          <button
+            key={index + 1}
+            onClick={() => paginate(index + 1)}
+            className={`px-4 py-2 mx-1 ${
+              currentPage === index + 1 ?  'text-orange font-bold' : 'bg-gray-200 text-gray-700'
+            } rounded-lg`}
+          >
+            {index + 1}
+          </button>
+        ))}
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 mx-1 text-gray-700 bg-gray-200 rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
 
       {/* Modal for Full Details */}

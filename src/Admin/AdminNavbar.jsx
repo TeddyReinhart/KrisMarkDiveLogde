@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Home, ListCheck, HousePlus, Settings, LogOut } from "lucide-react";
+import { Home, ListCheck, HousePlus,BedDouble,UserPlus,FileText, Settings, LogOut } from "lucide-react";
 import { auth } from "../Firebase/Firebase"; // Import Firebase auth
 import { signOut } from "firebase/auth"; // Import signOut function
 import logo from "../images/logo.png";
@@ -95,7 +95,7 @@ function AdminNavbar() {
                   }`
                 }
               >
-                <HousePlus className="w-6 h-6" />
+                <BedDouble className="w-6 h-6" />
                 <span>Room Availability</span>
               </NavLink>
             </li>
@@ -109,8 +109,8 @@ function AdminNavbar() {
                   }`
                 }
               >
-                <HousePlus className="w-6 h-6" />
-                <span>create user</span>
+                <UserPlus className="w-6 h-6" />
+                <span>Create User</span>
               </NavLink>
             </li>
 
@@ -123,8 +123,8 @@ function AdminNavbar() {
                   }`
                 }
               >
-                <HousePlus className="w-6 h-6" />
-                <span>reports</span>
+                <FileText className="w-6 h-6" />
+                <span>Reports</span>
               </NavLink>
             </li>
 

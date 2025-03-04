@@ -290,6 +290,7 @@ function BookingForm() {
                 <label className="block text-lg font-medium mb-2">Mobile Number</label>
                 <input
                   type="tel"
+                  maxLength={11}
                   name="mobileNumber"
                   value={guestInfo.mobileNumber}
                   onChange={handleGuestInfoChange}
@@ -344,48 +345,53 @@ function BookingForm() {
 
       {/* Step 3: Confirmation */}
       {step === 3 && (
-        <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-6">Step 3: Confirm Booking</h2>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Booking Summary</h3>
-              <div className="p-4 border border-gray-300 rounded-lg">
-                <p className="text-lg font-semibold">{selectedRoom?.name}</p>
-                <p className="text-gray-600">Rate per Day: ₱{selectedRoom?.ratePerDay?.toLocaleString()}</p>
-                <p className="text-gray-600">Check-in: {checkInDate?.toDateString()}</p>
-                <p className="text-gray-600">Check-out: {checkOutDate?.toDateString()}</p>
-                <p className="text-gray-600">Number of Nights: {numberOfNights}</p>
-                <p className="text-gray-600">Number of Guests: {numberOfGuests}</p>
-                <p className="text-gray-600">Total Cost: ₱{totalCost.toLocaleString()}</p>
+            <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-lg">
+            <h2 className="text-3xl font-bold mb-6 text-gray-800">Step 3: Confirm Booking</h2>
+          
+            <div className="space-y-8">
+              {/* Booking Summary */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-4 text-gray-800">Booking Summary</h3>
+                <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
+                  <p className="text-lg font-semibold text-gray-900">{selectedRoom?.name}</p>
+                  <p className="text-gray-700"><span className="font-medium">Rate per Day:</span> ₱{selectedRoom?.ratePerDay?.toLocaleString()}</p>
+                  <p className="text-gray-700"><span className="font-medium">Check-in:</span> {checkInDate?.toDateString()}</p>
+                  <p className="text-gray-700"><span className="font-medium">Check-out:</span> {checkOutDate?.toDateString()}</p>
+                  <p className="text-gray-700"><span className="font-medium">Number of Nights:</span> {numberOfNights}</p>
+                  <p className="text-gray-700"><span className="font-medium">Number of Guests:</span> {numberOfGuests}</p>
+                  <p className="text-gray-900 font-semibold text-lg"><span className="font-medium">Total Cost:</span> ₱{totalCost.toLocaleString()}</p>
+                </div>
+              </div>
+          
+              {/* Guest Information */}
+              <div>
+                <h3 className="text-2xl font-semibold mb-4 text-gray-800">Guest Information</h3>
+                <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
+                  <p className="text-gray-700"><span className="font-medium">First Name:</span> {guestInfo.firstName}</p>
+                  <p className="text-gray-700"><span className="font-medium">Last Name:</span> {guestInfo.lastName}</p>
+                  <p className="text-gray-700"><span className="font-medium">Email:</span> {guestInfo.email}</p>
+                  <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> {guestInfo.mobileNumber}</p>
+                  <p className="text-gray-700"><span className="font-medium">Gender:</span> {guestInfo.gender}</p>
+                  <p className="text-gray-700"><span className="font-medium">Special Request:</span> {guestInfo.specialRequest || "None"}</p>
+                </div>
               </div>
             </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Guest Information</h3>
-              <div className="p-4 border border-gray-300 rounded-lg">
-                <p className="text-gray-600">First Name: {guestInfo.firstName}</p>
-                <p className="text-gray-600">Last Name: {guestInfo.lastName}</p>
-                <p className="text-gray-600">Email: {guestInfo.email}</p>
-                <p className="text-gray-600">Mobile Number: {guestInfo.mobileNumber}</p>
-                <p className="text-gray-600">Gender: {guestInfo.gender}</p>
-                <p className="text-gray-600">Special Request: {guestInfo.specialRequest}</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-between">
-              <button
-                type="button"
-                className="bg-gray-500 text-white px-6 py-3 rounded-lg text-lg font-semibold"
-                onClick={handlePrevious}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="bg-orange-500 text-white px-6 py-3 rounded-lg text-lg font-semibold"
-                onClick={handleConfirmBooking}
-              >
-                Confirm Booking
-              </button>
-            </div>
+             {/* Buttons */}
+          <div className="mt-8 flex justify-between">
+            <button
+              type="button"
+              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition duration-200"
+              onClick={handlePrevious}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition duration-200"
+              onClick={handleConfirmBooking}
+            >
+              Confirm Booking
+            </button>
           </div>
         </div>
       )}
