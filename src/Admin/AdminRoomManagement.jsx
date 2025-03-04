@@ -21,6 +21,7 @@ export default function AdminRoomManagement() {
     wifi: true,
     bathroom: true,
     status: "Available",
+    ratePerDay: 0,
   });
 
   // Fetch rooms from Firebase on component mount
@@ -61,14 +62,12 @@ export default function AdminRoomManagement() {
       alert("Please select an image before adding a room.");
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
-      // Upload image to Cloudinary
       const imageUrl = await uploadImageToCloudinary(selectedFile);
-
-      // Save room data to Firebase Firestore
+  
       const newRoom = {
         name: formData.name,
         image: imageUrl,
@@ -76,14 +75,13 @@ export default function AdminRoomManagement() {
         wifi: formData.wifi,
         bathroom: formData.bathroom,
         status: formData.status,
+        ratePerDay: parseFloat(formData.ratePerDay), // Add this line
       };
-
+  
       const docRef = await addDoc(collection(db, "rooms"), newRoom);
-
-      // Update local state
+  
       setRooms([...rooms, { id: docRef.id, ...newRoom }]);
-
-      // Reset form and close modal
+  
       setSelectedFile(null);
       setPreview("");
       setIsAddModalOpen(false);
@@ -94,7 +92,6 @@ export default function AdminRoomManagement() {
       setLoading(false);
     }
   };
-
   // Delete a room
   const deleteRoom = async (id) => {
     try {
@@ -129,15 +126,14 @@ export default function AdminRoomManagement() {
         wifi: formData.wifi,
         bathroom: formData.bathroom,
         status: formData.status,
+        ratePerDay: parseFloat(formData.ratePerDay), // Add this line
       });
-
-      // Update local state
+  
       const updatedRooms = rooms.map((room) =>
         room.id === formData.id ? { ...room, ...formData } : room
       );
       setRooms(updatedRooms);
-
-      // Close modal
+  
       setIsEditModalOpen(false);
     } catch (error) {
       console.error("Error updating room:", error);
@@ -173,6 +169,7 @@ export default function AdminRoomManagement() {
               <p className={`text-sm font-semibold mt-2 ${room.status === "Available" ? "text-green-500" : room.status === "Occupied" ? "text-red-500" : "text-yellow-500"}`}>
                 {room.status}
               </p>
+              <p className="text-sm text-gray-600">Rate Per Day: ₱{room.ratePerDay?.toLocaleString() || "N/A"}</p>
               <div className="flex justify-end gap-2 mt-4">
                 <Button variant="outline" size="sm" onClick={() => openEditModal(room)}>
                   <Edit size={16} />
@@ -230,12 +227,24 @@ export default function AdminRoomManagement() {
               />
             </div>
             <div>
+  <Label>Rate Per Day</Label>
+  <Input
+    type="number"
+    name="ratePerDay"
+    value={formData.ratePerDay}
+    onChange={handleInputChange}
+    placeholder="Enter rate per day"
+  />
+</div>
+
+            <div>
               <Label>Status</Label>
               <Select
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
               >
+              
                 <option value="Available">Available</option>
                 <option value="Occupied">Occupied</option>
                 <option value="Limited Available">Limited Available</option>
@@ -296,6 +305,17 @@ export default function AdminRoomManagement() {
                 onChange={handleInputChange}
               />
             </div>
+
+            <div>
+  <Label>Rate Per Day</Label>
+  <Input
+    type="number"
+    name="ratePerDay"
+    value={formData.ratePerDay}
+    onChange={handleInputChange}
+    placeholder="Enter rate per day"
+  />
+</div>
             <div>
               <Label>Status</Label>
               <Select
