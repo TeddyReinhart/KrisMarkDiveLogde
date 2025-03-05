@@ -12,6 +12,11 @@ const BookHistory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isLoading, setIsLoading] = useState(true); // State to indicate loading
 
+  // Time Period Filter State
+  const [timePeriod, setTimePeriod] = useState("monthly"); // "monthly" or "yearly"
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Default to current month (YYYY-MM)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString()); // Default to current year
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Number of items per page
@@ -26,7 +31,7 @@ const BookHistory = () => {
         ...doc.data(),
       }));
       setBookings(bookingsData);
-      setFilteredBookings(bookingsData); // Initialize filtered bookings
+      filterBookings(bookingsData, searchQuery, filter, timePeriod, selectedMonth, selectedYear);
     } catch (error) {
       console.error("Error fetching booking history: ", error);
     } finally {
@@ -36,24 +41,39 @@ const BookHistory = () => {
 
   useEffect(() => {
     fetchBookingHistory();
-  }, []);
+  }, [timePeriod, selectedMonth, selectedYear]); // Re-fetch data when time period, month, or year changes
 
   // Handle search query changes
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
-    filterBookings(query, filter);
+    filterBookings(bookings, query, filter, timePeriod, selectedMonth, selectedYear);
   };
 
   // Handle filter changes
   const handleFilterChange = (e) => {
     const selectedFilter = e.target.value;
     setFilter(selectedFilter);
-    filterBookings(searchQuery, selectedFilter);
+    filterBookings(bookings, searchQuery, selectedFilter, timePeriod, selectedMonth, selectedYear);
   };
 
-  // Filter bookings based on search query and filter
-  const filterBookings = (query, filter) => {
+  // Handle time period changes
+  const handleTimePeriodChange = (e) => {
+    setTimePeriod(e.target.value);
+  };
+
+  // Handle month changes
+  const handleMonthChange = (e) => {
+    setSelectedMonth(e.target.value);
+  };
+
+  // Handle year changes
+  const handleYearChange = (e) => {
+    setSelectedYear(e.target.value);
+  };
+
+  // Filter bookings based on search query, filter, time period, month, and year
+  const filterBookings = (bookings, query, filter, timePeriod, month, year) => {
     let filtered = bookings.filter((booking) => {
       const matchesSearch =
         booking.selectedRoom.toLowerCase().includes(query) ||
@@ -64,7 +84,13 @@ const BookHistory = () => {
       const matchesFilter =
         filter === "all" || booking.selectedRoom === filter;
 
-      return matchesSearch && matchesFilter;
+      const bookingDate = new Date(booking.checkInDate);
+      const matchesTimePeriod =
+        timePeriod === "monthly"
+          ? bookingDate.toISOString().slice(0, 7) === month
+          : bookingDate.getFullYear().toString() === year;
+
+      return matchesSearch && matchesFilter && matchesTimePeriod;
     });
     setFilteredBookings(filtered);
     setCurrentPage(1); // Reset to the first page after filtering
@@ -106,18 +132,18 @@ const BookHistory = () => {
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Booking History</h1>
 
       {/* Filter and Search Bar */}
-      <div className="mb-8 flex flex-col md:flex-row gap-4 justify-end">
+      <div className="mb-8 flex flex-col md:flex-row gap-4 ml-auto justify-end">
         <input
           type="text"
           placeholder="Search here"
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:w-1/8 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={filter}
           onChange={handleFilterChange}
-          className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:w-1/8 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Rooms</option>
           {Array.from(new Set(bookings.map((booking) => booking.roomDetails?.name))).map((roomName) => (
@@ -126,6 +152,31 @@ const BookHistory = () => {
             </option>
           ))}
         </select>
+        <select
+          value={timePeriod}
+          onChange={handleTimePeriodChange}
+          className="w-full md:w-1/8 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        {timePeriod === "monthly" ? (
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={handleMonthChange}
+            className="w-full md:w-1/8 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        ) : (
+          <input
+            type="number"
+            value={selectedYear}
+            onChange={handleYearChange}
+            min="2020"
+            max={new Date().getFullYear()}
+            className="w-full md:w-1/8 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        )}
         <button
           onClick={exportToExcel}
           className="w-full md:w-auto bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"

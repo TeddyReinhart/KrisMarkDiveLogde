@@ -347,8 +347,8 @@ const BookRooms = () => {
 
       {/* Payment Modal */}
       {isPaymentModalOpen && selectedBookingData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-8 rounded-lg w-full max-w-2xl shadow-lg">
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Payment Details</h2>
             <form onSubmit={handlePaymentSubmit}>
               <div className="space-y-4">
@@ -387,7 +387,7 @@ const BookRooms = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold">Billing Address</label>
+                  <label className="block text-gray-700 font-semibold">Email Address</label>
                   <input
                     type="text"
                     name="billingAddress"
@@ -411,7 +411,7 @@ const BookRooms = () => {
                 </div>
                 {paymentDetails.paymentMethod === "gcash" && (
                   <div>
-                    <label className="block text-gray-700 font-semibold">GCash Number</label>
+                    <label className="block text-gray-700 font-semibold">Reference Number</label>
                     <input
                       type="text"
                       name="gcashNumber"
@@ -433,7 +433,7 @@ const BookRooms = () => {
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-500 transition-colors"
                 >
                   Confirm Payment
                 </button>

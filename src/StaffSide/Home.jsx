@@ -130,7 +130,7 @@ function RoomCard({ image, name, status, onSelect, isSelected }) {
         className={`w-full h-48 object-cover rounded-lg ${
           isOccupied ? "opacity-50" : "" // Reduce opacity for occupied rooms
         }`}
-      />
+        />
       <h4 className="mt-4 text-lg font-bold text-center">{name}</h4>
       {isOccupied && (
         <p className="mt-2 text-red-600 font-semibold">Occupied</p> // Show "Occupied" text

@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
 
-import loginpic from "./images/login.png";
+import loginpic from "./images/loginpic.jpg";
 import logo from "./images/logo1.png";
+
 
 const Login = () => {
   const [email, setEmail] = useState("");

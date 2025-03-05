@@ -17,17 +17,20 @@ import RoomAvailability from "./StaffSide/RoomAvailability";
 import BookingForm from "./StaffSide/BookingForm";
 import BookRooms from "./StaffSide/BookRooms";
 import BookHistory from "./StaffSide/BookHistory";
+import Report from "./StaffSide/Report";
 import Reports from "./Admin/Reports";
 import ComplaintReportForm from './ComplaintReportForm';
 import ReportsTable from './Admin/ReportsTable';
-
 
 const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Redirect root path to /home */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
+
         {/* Public Routes */}
-        <Route path="/Report" element={<ComplaintReportForm/>} />
+        <Route path="/Report" element={<ComplaintReportForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -43,14 +46,13 @@ const App = () => {
           <Route index element={<AdminHome />} />
           <Route path="room-management" element={<AdminRoomManagement />} />
           <Route path="complaints" element={<ReportsTable />} />
-          <Route path="admin-rooms-availablity" element={<RoomAvailability />} />
+          <Route path="admin-rooms-availability" element={<RoomAvailability />} />
           <Route path="create-user" element={<Register />} />
           <Route path="reports" element={<Reports />} />
           {/* Add more nested routes here if needed */}
         </Route>
 
         {/* Staff Routes */}
-
         <Route
           path="/home"
           element={
@@ -61,13 +63,10 @@ const App = () => {
         >
           <Route index element={<Home />} />
           <Route path="rooms-availability" element={<RoomAvailability />} />
-          <Route
-            path="rooms-availability/create-booking"
-            element={<BookingForm />}
-          />
+          <Route path="rooms-availability/booking-form" element={<BookingForm />} />
           <Route path="book-rooms" element={<BookRooms />} />
           <Route path="book-history" element={<BookHistory />} />
-          <Route path="reports" element={<Reports />} />
+          <Route path="report" element={<Report />} />
         </Route>
 
         {/* Default Redirect to Login */}

@@ -88,7 +88,7 @@ function AdminNavbar() {
 
             <li>
               <NavLink
-                to="/admin-home/admin-rooms-availablity"
+                to="/admin-home/admin-rooms-availability"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
                     isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
@@ -177,7 +177,7 @@ function AdminNavbar() {
             <li>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full hover:bg-red-500 hover:text-white transition"
+                className="flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full hover:bg-orange-500 hover:text-white transition"
               >
                 <LogOut className="w-6 h-6" />
                 <span>Logout</span>

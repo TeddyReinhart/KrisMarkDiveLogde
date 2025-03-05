@@ -84,7 +84,7 @@ function Navbar() {
             {/* Reports */}
             <li className="mb-4">
               <NavLink
-                to="/home/reports"
+                to="/home/report"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
                     isActive ? "bg-orange-500 text-white" : "text-gray-700"
