@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
+import ConfirmationModal from "./ConfirmationModal"; // Import the modal component
 
 function BookingForm() {
   const { state } = useLocation();
   const selectedRoom = state?.selectedRoom;
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const [step, setStep] = useState(1);
   const [checkInDate, setCheckInDate] = useState(null);
@@ -15,7 +17,8 @@ function BookingForm() {
   const [numberOfNights, setNumberOfNights] = useState(0);
   const [roomChoice, setRoomChoice] = useState(selectedRoom?.name || "");
   const [numberOfGuests, setNumberOfGuests] = useState(1);
-  const [bookedDates, setBookedDates] = useState([]); // State to store booked dates
+  const [bookedDates, setBookedDates] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
 
   const [guestInfo, setGuestInfo] = useState({
     firstName: "",
@@ -105,7 +108,13 @@ function BookingForm() {
     }
   };
 
-  const handleConfirmBooking = async () => {
+  const handleConfirmBooking = () => {
+    setIsModalOpen(true); // Open the modal
+  };
+
+  const handleModalConfirm = async () => {
+    setIsModalOpen(false); // Close the modal
+
     if (
       guestInfo.firstName &&
       guestInfo.lastName &&
@@ -116,24 +125,24 @@ function BookingForm() {
       try {
         // Prepare booking data
         const bookingData = {
-          selectedRoom: selectedRoom?.name, // Room name
-          roomDetails: selectedRoom, // Include the entire selectedRoom object
+          selectedRoom: selectedRoom?.name,
+          roomDetails: selectedRoom,
           checkInDate: checkInDate?.toDateString(),
           checkOutDate: checkOutDate?.toDateString(),
           numberOfNights,
           numberOfGuests,
-          ratePerDay: selectedRoom?.ratePerDay, // Include ratePerDay in the booking data
+          ratePerDay: selectedRoom?.ratePerDay,
           totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
           guestInfo,
-          timestamp: new Date(), // Add a timestamp for when the booking was made
+          timestamp: new Date(),
         };
 
         // Save booking data to Firestore
         const docRef = await addDoc(collection(db, "bookings"), bookingData);
         console.log("Booking saved with ID: ", docRef.id);
 
-        alert("Booking Confirmed!");
-        // Optionally, you can navigate to a confirmation page here
+        // Redirect to the home page
+        navigate("/"); // Replace "/" with the path to your home page
       } catch (error) {
         console.error("Error saving booking: ", error);
         alert("An error occurred while saving the booking. Please try again.");
@@ -141,6 +150,10 @@ function BookingForm() {
     } else {
       alert("Please fill in all required fields.");
     }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false); // Close the modal
   };
 
   const totalCost = selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0;
@@ -377,7 +390,7 @@ function BookingForm() {
               </div>
             </div>
              {/* Buttons */}
-          <div className="mt-8 flex justify-between">
+             <div className="mt-8 flex justify-between">
             <button
               type="button"
               className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition duration-200"
@@ -395,8 +408,15 @@ function BookingForm() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+                isOpen={isModalOpen}
+                onClose={handleModalClose}
+                onConfirm={handleModalConfirm}
+              />
+            </div>
+          );
+        }
+
 
 export default BookingForm;

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine, FaExclamationCircle, FaMoneyCheckAlt, FaCoins } from "react-icons/fa";
-import ReactPaginate from "react-paginate"; // Import ReactPaginate
+import ReactPaginate from "react-paginate";
 
 const AdminHome = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const AdminHome = () => {
 
   // Pagination State for Expense History
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 6; // Number of items per page
+  const itemsPerPage = 6;
 
   // Calculate the current page's expenses
   const offset = currentPage * itemsPerPage;
@@ -50,6 +50,8 @@ const AdminHome = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true); // Show loader while fetching data
+
         // Fetch room types from the "rooms" collection
         const roomsSnapshot = await getDocs(collection(db, "rooms"));
         const rooms = roomsSnapshot.docs.map((doc) => ({
@@ -168,11 +170,13 @@ const AdminHome = () => {
         setRevenueData(revenueArray);
       } catch (error) {
         console.error("Error fetching data: ", error);
+      } finally {
+        setLoading(false); // Hide loader after fetching data
       }
     };
 
     fetchData();
-  }, [timePeriod, selectedMonth, selectedYear]);
+  }, [timePeriod, selectedMonth, selectedYear]); // Add selectedMonth and selectedYear as dependencies
 
   // Handle expense form submission
   const handleExpenseSubmit = async (e) => {
@@ -224,8 +228,18 @@ const AdminHome = () => {
   // Colors for the pie chart
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
+  // Full-Page Loader Component
+  const FullPageLoader = () => (
+    <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
+      <div className="animate-spin rounded-full h-1o w-16 border-t-4 border-purple-500"></div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-100 p-6">
+    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-100 p-6 relative">
+      {/* Full-Page Loader */}
+      {loading && <FullPageLoader />}
+
       {/* Header Section */}
       <div className="w-full max-w-6xl mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>

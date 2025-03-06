@@ -306,7 +306,7 @@ export default function AdminRoomManagement() {
                     >
                       <option value="Available">Available</option>
                       <option value="Occupied">Occupied</option>
-                      <option value="Limited Available">Limited Available</option>
+                      <option value="Under Maintenance">Under Maintenance</option>
                     </Select>
                   </div>
                   <div>
@@ -416,7 +416,7 @@ export default function AdminRoomManagement() {
                     >
                       <option value="Available">Available</option>
                       <option value="Occupied">Occupied</option>
-                      <option value="Limited Available">Limited Available</option>
+                      <option value="Under Maintenance"> Under Maintenance</option>
                     </Select>
                   </div>
                   <Button

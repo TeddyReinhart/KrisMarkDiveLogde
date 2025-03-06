@@ -10,6 +10,7 @@ const BookRooms = () => {
   const [selectedBooking, setSelectedBooking] = useState(null); // State to store the selected booking for modal
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false); // State to control payment modal visibility
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false); // State to control confirmation modal visibility
   const [isLoading, setIsLoading] = useState(true); // State to indicate loading
   const [paymentDetails, setPaymentDetails] = useState({
     billingName: "",
@@ -57,7 +58,7 @@ const BookRooms = () => {
   const handleFilterChange = (e) => {
     const selectedFilter = e.target.value;
     setFilter(selectedFilter);
-    filterBookings(searchQuery, selectedFilter);
+    filterBookings(query, selectedFilter);
   };
 
   // Filter bookings based on search query and filter
@@ -134,8 +135,8 @@ const BookRooms = () => {
       // Delete the booking from the bookings collection
       await deleteDoc(bookingRef);
 
-      alert("Check-out and payment successful!");
-      fetchBookings(); // Refresh the list of bookings
+      // Show confirmation modal
+      setIsConfirmationModalOpen(true);
       setIsPaymentModalOpen(false); // Close payment modal
       setPaymentDetails({
         billingName: "",
@@ -143,6 +144,8 @@ const BookRooms = () => {
         paymentMethod: "cash",
         gcashNumber: "",
       }); // Reset payment details
+
+      fetchBookings(); // Refresh the list of bookings
     } catch (error) {
       console.error("Error during check-out and payment: ", error);
       alert("Failed to complete check-out and payment. Please try again.");
@@ -186,12 +189,12 @@ const BookRooms = () => {
           placeholder="Search here"
           value={searchQuery}
           onChange={handleSearch}
-          className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:w-1/6 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={filter}
           onChange={handleFilterChange}
-          className="w-full md:w-1/4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full md:w-1/6 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">All Rooms</option>
           {Array.from(new Set(bookings.map((booking) => booking.roomDetails?.name))).map((roomName) => (
@@ -216,14 +219,15 @@ const BookRooms = () => {
               <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-600">
-                  Loading...
-                </td>
-              </tr>
-            ) : currentBookings.length === 0 ? (
+        
+        <tbody>
+          {isLoading ? (
+            <tr>
+              <td colSpan="7" className="h-64 w-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+              </td>
+            </tr>
+          ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="7" className="p-6 text-center text-gray-600">
                   No bookings found.
@@ -276,7 +280,7 @@ const BookRooms = () => {
             key={index + 1}
             onClick={() => paginate(index + 1)}
             className={`px-4 py-2 mx-1 ${
-              currentPage === index + 1 ?  'text-orange font-bold' : 'bg-gray-200 text-gray-700'
+              currentPage === index + 1 ? "text-orange font-bold" : "bg-gray-200 text-gray-700"
             } rounded-lg`}
           >
             {index + 1}
@@ -293,7 +297,7 @@ const BookRooms = () => {
 
       {/* Modal for Full Details */}
       {isModalOpen && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg w-full max-w-2xl shadow-lg">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Booking Details</h2>
             <div className="space-y-4 text-gray-700">
@@ -411,7 +415,7 @@ const BookRooms = () => {
                 </div>
                 {paymentDetails.paymentMethod === "gcash" && (
                   <div>
-                    <label className="block text-gray-700 font-semibold">Reference Number</label>
+                    <label className="block text-gray-700 font-semibold">Ref. No.</label>
                     <input
                       type="text"
                       name="gcashNumber"
@@ -439,6 +443,24 @@ const BookRooms = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {isConfirmationModalOpen && (
+        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50 shadow-lg">
+          <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
+            <h3 className="text-lg font-semibold">Payment Confirmed!</h3>
+            <p className="text-gray-600 my-4">The payment has been successfully processed.</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsConfirmationModalOpen(false)}
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}

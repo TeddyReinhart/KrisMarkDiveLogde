@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { db } from "../Firebase/Firebase"; // Ensure correct path
 import { collection, addDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
 const Report = () => {
-  const navigate = useNavigate(); // Initialize navigate function
-
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     roomType: "",
     roomNo: "",
@@ -13,8 +12,8 @@ const Report = () => {
     priority: "High",
     status: "Pending",
   });
-
-  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,10 +24,8 @@ const Report = () => {
     setIsSubmitting(true);
 
     try {
-      // Add the report to Firestore
       await addDoc(collection(db, "reports"), formData);
-      alert("Report submitted successfully!");
-      navigate("/home"); // Redirect to staff home page after submission
+      setShowModal(true);
     } catch (error) {
       console.error("Error adding report: ", error);
       alert("Failed to submit report. Please try again.");
@@ -125,6 +122,24 @@ const Report = () => {
           </div>
         </form>
       </div>
+      
+      {/* Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50 shadow-lg">          
+          <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
+            <h3 className="text-lg font-semibold">Report Submitted!</h3>
+            <p className="text-gray-600 my-4">Your maintenance report has been successfully submitted.</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => navigate("/home")}
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

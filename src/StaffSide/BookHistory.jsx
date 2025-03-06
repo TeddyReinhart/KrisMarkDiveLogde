@@ -271,9 +271,9 @@ const BookHistory = () => {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="9" className="p-6 text-center text-gray-600">
-                  Loading...
-                </td>
+                <td colSpan="7" className="h-64 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+            </td>
               </tr>
             ) : currentBookings.length === 0 ? (
               <tr>

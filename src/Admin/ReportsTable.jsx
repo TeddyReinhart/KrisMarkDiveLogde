@@ -43,7 +43,10 @@ function ReportsTable() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="text-center text-gray-600">Loading complaints...</div>
+          <div className="flex justify-center mt-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+        </div>
+        
         ) : (
           /* Complaints Table */
           <div className="overflow-x-auto">
