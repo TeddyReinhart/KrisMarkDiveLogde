@@ -113,8 +113,8 @@ function BookingForm() {
   };
 
   const handleModalConfirm = async () => {
-    setIsModalOpen(false); // Close the modal
-
+    setIsModalOpen(false);
+  
     if (
       guestInfo.firstName &&
       guestInfo.lastName &&
@@ -123,7 +123,6 @@ function BookingForm() {
       guestInfo.mobileNumber
     ) {
       try {
-        // Prepare booking data
         const bookingData = {
           selectedRoom: selectedRoom?.name,
           roomDetails: selectedRoom,
@@ -136,19 +135,37 @@ function BookingForm() {
           guestInfo,
           timestamp: new Date(),
         };
-
-        // Save booking data to Firestore
-        const docRef = await addDoc(collection(db, "bookings"), bookingData);
-        console.log("Booking saved with ID: ", docRef.id);
-
-        // Redirect to the home page
-        navigate("/"); // Replace "/" with the path to your home page
+  
+        // Send email using the backend URL from .env
+        const emailResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: guestInfo.email,
+            firstName: guestInfo.firstName,
+            lastName: guestInfo.lastName,
+            selectedRoom: selectedRoom?.name,
+            checkInDate: checkInDate?.toDateString(),
+            checkOutDate: checkOutDate?.toDateString(),
+            totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
+          }),
+        });
+  
+        if (emailResponse.ok) {
+          console.log('Email sent successfully');
+        } else {
+          console.error('Failed to send email');
+        }
+  
+        navigate('/');
       } catch (error) {
-        console.error("Error saving booking: ", error);
-        alert("An error occurred while saving the booking. Please try again.");
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
       }
     } else {
-      alert("Please fill in all required fields.");
+      alert('Please fill in all required fields.');
     }
   };
 
