@@ -28,12 +28,17 @@ export default function AdminRoomManagement() {
   // Fetch rooms from Firebase on component mount
   useEffect(() => {
     const fetchRooms = async () => {
-      const querySnapshot = await getDocs(collection(db, "rooms"));
-      const roomsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setRooms(roomsData);
+      try {
+        const querySnapshot = await getDocs(collection(db, "rooms"));
+        const roomsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setRooms(roomsData);
+      } catch (error) {
+        console.error("Error fetching rooms:", error);
+        alert("Failed to fetch rooms. Please try again.");
+      }
     };
 
     fetchRooms();
@@ -55,6 +60,21 @@ export default function AdminRoomManagement() {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+  };
+
+  // Reset form data
+  const resetForm = () => {
+    setFormData({
+      id: null,
+      name: "",
+      guests: 2,
+      wifi: true,
+      bathroom: true,
+      status: "Available",
+      ratePerDay: 0,
+    });
+    setSelectedFile(null);
+    setPreview("");
   };
 
   // Add a new room
@@ -83,8 +103,7 @@ export default function AdminRoomManagement() {
 
       setRooms([...rooms, { id: docRef.id, ...newRoom }]);
 
-      setSelectedFile(null);
-      setPreview("");
+      resetForm();
       setIsAddModalOpen(false);
     } catch (error) {
       console.error("Error adding room:", error);
@@ -96,12 +115,14 @@ export default function AdminRoomManagement() {
 
   // Delete a room
   const deleteRoom = async (id) => {
-    try {
-      await deleteDoc(doc(db, "rooms", id));
-      setRooms(rooms.filter((room) => room.id !== id));
-    } catch (error) {
-      console.error("Error deleting room:", error);
-      alert("Failed to delete room. Please try again.");
+    if (window.confirm("Are you sure you want to delete this room?")) {
+      try {
+        await deleteDoc(doc(db, "rooms", id));
+        setRooms(rooms.filter((room) => room.id !== id));
+      } catch (error) {
+        console.error("Error deleting room:", error);
+        alert("Failed to delete room. Please try again.");
+      }
     }
   };
 
@@ -138,6 +159,7 @@ export default function AdminRoomManagement() {
       setRooms(updatedRooms);
 
       setIsEditModalOpen(false);
+      resetForm();
     } catch (error) {
       console.error("Error updating room:", error);
       alert("Failed to update room. Please try again.");
@@ -209,194 +231,206 @@ export default function AdminRoomManagement() {
 
       {/* Add Room Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-  <AnimatePresence>
-    {isAddModalOpen && (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }} 
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }} 
-        transition={{ duration: 0.2 }} 
-        className="fixed inset-0 flex items-center justify-center z-50"
-      >
-
-        {/* Modal Content */}
-        <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-auto p-6 z-10 relative">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-gray-700">Add New Room</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
-              <Input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter room name"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
-              <Input
-                type="number"
-                name="guests"
-                value={formData.guests}
-                onChange={handleInputChange}
-                placeholder="Enter max guests"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">WiFi</Label>
-              <Checkbox
-                name="wifi"
-                checked={formData.wifi}
-                onChange={handleInputChange}
-                className="text-purple-600 border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Bathroom</Label>
-              <Checkbox
-                name="bathroom"
-                checked={formData.bathroom}
-                onChange={handleInputChange}
-                className="text-purple-600 border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Rate Per Day</Label>
-              <Input
-                type="number"
-                name="ratePerDay"
-                value={formData.ratePerDay}
-                onChange={handleInputChange}
-                placeholder="Enter rate per day"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Status</Label>
-              <Select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="Available">Available</option>
-                <option value="Occupied">Occupied</option>
-                <option value="Limited Available">Limited Available</option>
-              </Select>
-            </div>
-            <Button
-              onClick={addRoom}
-              disabled={loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+        <AnimatePresence>
+          {isAddModalOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 flex items-center justify-center z-50"
             >
-              {loading ? "Uploading..." : "Add Room"}
-            </Button>
-          </div>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</Dialog>
+              <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-auto p-6 z-10 relative">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-semibold text-gray-800">Add New Room</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
+                    <Input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Enter room name"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
+                    <Input
+                      type="number"
+                      name="guests"
+                      value={formData.guests}
+                      onChange={handleInputChange}
+                      placeholder="Enter max guests"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">WiFi</Label>
+                    <Checkbox
+                      name="wifi"
+                      checked={formData.wifi}
+                      onChange={handleInputChange}
+                      className="text-purple-600 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Bathroom</Label>
+                    <Checkbox
+                      name="bathroom"
+                      checked={formData.bathroom}
+                      onChange={handleInputChange}
+                      className="text-purple-600 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Rate Per Day</Label>
+                    <Input
+                      type="number"
+                      name="ratePerDay"
+                      value={formData.ratePerDay}
+                      onChange={handleInputChange}
+                      placeholder="Enter rate per day"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Status</Label>
+                    <Select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Occupied">Occupied</option>
+                      <option value="Limited Available">Limited Available</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Room Image</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                    {preview && (
+                      <img
+                        src={preview}
+                        alt="Preview"
+                        className="mt-2 w-full h-32 object-cover rounded-lg"
+                      />
+                    )}
+                  </div>
+                  <Button
+                    onClick={addRoom}
+                    disabled={loading}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    {loading ? "Uploading..." : "Add Room"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Dialog>
 
       {/* Edit Room Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <AnimatePresence>
           {isEditModalOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }} 
+              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }} 
-              transition={{ duration: 0.2 }} 
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 flex items-center justify-center z-50"
             >
-              
-        {/* Modal Content */}
-        <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-auto p-6 z-10 relative">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-gray-800">Edit Room</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
-              <Input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter room name"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
-              <Input
-                type="number"
-                name="guests"
-                value={formData.guests}
-                onChange={handleInputChange}
-                placeholder="Enter max guests"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">WiFi</Label>
-              <Checkbox
-                name="wifi"
-                checked={formData.wifi}
-                onChange={handleInputChange}
-                className="text-purple-600 border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Bathroom</Label>
-              <Checkbox
-                name="bathroom"
-                checked={formData.bathroom}
-                onChange={handleInputChange}
-                className="text-purple-600 border-gray-300 rounded"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Rate Per Day</Label>
-              <Input
-                type="number"
-                name="ratePerDay"
-                value={formData.ratePerDay}
-                onChange={handleInputChange}
-                placeholder="Enter rate per day"
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">Status</Label>
-              <Select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="Available">Available</option>
-                <option value="Occupied">Occupied</option>
-                <option value="Limited Available">Limited Available</option>
-              </Select>
-            </div>
-            <Button
-              onClick={editRoom}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</Dialog>
+              <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-auto p-6 z-10 relative">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-semibold text-gray-800">Edit Room</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
+                    <Input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Enter room name"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
+                    <Input
+                      type="number"
+                      name="guests"
+                      value={formData.guests}
+                      onChange={handleInputChange}
+                      placeholder="Enter max guests"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">WiFi</Label>
+                    <Checkbox
+                      name="wifi"
+                      checked={formData.wifi}
+                      onChange={handleInputChange}
+                      className="text-purple-600 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Bathroom</Label>
+                    <Checkbox
+                      name="bathroom"
+                      checked={formData.bathroom}
+                      onChange={handleInputChange}
+                      className="text-purple-600 border-gray-300 rounded"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Rate Per Day</Label>
+                    <Input
+                      type="number"
+                      name="ratePerDay"
+                      value={formData.ratePerDay}
+                      onChange={handleInputChange}
+                      placeholder="Enter rate per day"
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700">Status</Label>
+                    <Select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Occupied">Occupied</option>
+                      <option value="Limited Available">Limited Available</option>
+                    </Select>
+                  </div>
+                  <Button
+                    onClick={editRoom}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Dialog>
     </div>
   );
 }

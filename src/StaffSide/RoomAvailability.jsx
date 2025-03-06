@@ -56,7 +56,7 @@ function RoomAvailability() {
 
   // Navigate to BookingForm.jsx with selected room data
   const handleRoomClick = (room) => {
-    navigate("/home/rooms-availability/booking-form", { state: { room } });
+    navigate("/home/rooms-availability/booking-form", { state: { selectedRoom: room } });
   };
 
   return (

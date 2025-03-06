@@ -14,58 +14,117 @@ const Report = () => {
     status: "Pending",
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
+      // Add the report to Firestore
       await addDoc(collection(db, "reports"), formData);
       alert("Report submitted successfully!");
       navigate("/home"); // Redirect to staff home page after submission
     } catch (error) {
       console.error("Error adding report: ", error);
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
+
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Maintenance Report</h2>
-      <form onSubmit={handleSubmit} className="bg-gray-100 p-6 rounded-lg shadow-md">
-        <label className="block mb-2">Select Room Type:</label>
-        <select name="roomType" onChange={handleChange} required className="w-full p-2 mb-4 border rounded">
-          <option value="">-- Select Room Type --</option>
-          <option value="Twin Room">Twin Room</option>
-          <option value="Triple Room">Triple Room</option>
-          <option value="Standard Double">Standard Double</option>
-          <option value="Family Room">Family Room</option>
-        </select>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Maintenance Report</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Room Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Room Type:</label>
+            <select
+              name="roomType"
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Select Room Type --</option>
+              <option value="Twin Room">Twin Room</option>
+              <option value="Triple Room">Triple Room</option>
+              <option value="Standard Double">Standard Double</option>
+              <option value="Family Room">Family Room</option>
+            </select>
+          </div>
 
-        <label className="block mb-2">Enter Room Number:</label>
-        <input type="text" name="roomNo" onChange={handleChange} required className="w-full p-2 mb-4 border rounded" />
+          {/* Room Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Enter Room Number:</label>
+            <input
+              type="text"
+              name="roomNo"
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Room Number"
+            />
+          </div>
 
-        <label className="block mb-2">Describe the issue:</label>
-        <textarea name="issue" onChange={handleChange} required className="w-full p-2 mb-4 border rounded"></textarea>
+          {/* Issue Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Describe the Issue:</label>
+            <textarea
+              name="issue"
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe the issue..."
+              rows="4"
+            />
+          </div>
 
-        <label className="block mb-2">Priority Level:</label>
-        <select name="priority" onChange={handleChange} className="w-full p-2 mb-4 border rounded">
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
+          {/* Priority Level */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Priority Level:</label>
+            <select
+              name="priority"
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
 
-        <label className="block mb-2">Status:</label>
-        <select name="status" onChange={handleChange} className="w-full p-2 mb-4 border rounded">
-          <option value="Pending">Pending</option>
-          <option value="In progress">In progress</option>
-          <option value="Resolved">Resolved</option>
-        </select>
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status:</label>
+            <select
+              name="status"
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Pending">Pending</option>
+              <option value="In progress">In progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
 
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
-          Submit Report
-        </button>
-      </form>
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {isSubmitting ? "Submitting..." : "Submit Report"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

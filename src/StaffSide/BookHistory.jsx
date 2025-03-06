@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 import * as XLSX from "xlsx"; // For exporting to Excel
 
@@ -11,6 +11,7 @@ const BookHistory = () => {
   const [selectedBooking, setSelectedBooking] = useState(null); // State to store the selected booking for modal
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isLoading, setIsLoading] = useState(true); // State to indicate loading
+  const [selectedBookings, setSelectedBookings] = useState([]); // State to store selected bookings for deletion
 
   // Time Period Filter State
   const [timePeriod, setTimePeriod] = useState("monthly"); // "monthly" or "yearly"
@@ -127,6 +128,60 @@ const BookHistory = () => {
   // Calculate total pages
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
 
+  // Handle individual booking selection
+  const handleSelectBooking = (id) => {
+    if (selectedBookings.includes(id)) {
+      setSelectedBookings(selectedBookings.filter((bookingId) => bookingId !== id));
+    } else {
+      setSelectedBookings([...selectedBookings, id]);
+    }
+  };
+
+  // Handle "Select All" checkbox
+  const handleSelectAll = () => {
+    if (selectedBookings.length === currentBookings.length) {
+      setSelectedBookings([]); // Deselect all
+    } else {
+      setSelectedBookings(currentBookings.map((booking) => booking.id)); // Select all
+    }
+  };
+
+  // Delete selected bookings
+  const deleteSelectedBookings = async () => {
+    if (selectedBookings.length === 0) {
+      alert("No bookings selected.");
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to delete the selected bookings?")) {
+      try {
+        for (const id of selectedBookings) {
+          await deleteDoc(doc(db, "bookingHistory", id));
+        }
+        setBookings(bookings.filter((booking) => !selectedBookings.includes(booking.id)));
+        setSelectedBookings([]); // Clear selection
+        fetchBookingHistory(); // Refresh data
+      } catch (error) {
+        console.error("Error deleting bookings: ", error);
+        alert("Failed to delete bookings. Please try again.");
+      }
+    }
+  };
+
+  // Delete a single booking
+  const deleteBooking = async (id) => {
+    if (window.confirm("Are you sure you want to delete this booking?")) {
+      try {
+        await deleteDoc(doc(db, "bookingHistory", id));
+        setBookings(bookings.filter((booking) => booking.id !== id));
+        fetchBookingHistory(); // Refresh data
+      } catch (error) {
+        console.error("Error deleting booking: ", error);
+        alert("Failed to delete booking. Please try again.");
+      }
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Booking History</h1>
@@ -183,6 +238,12 @@ const BookHistory = () => {
         >
           Export to Excel
         </button>
+        <button
+          onClick={deleteSelectedBookings}
+          className="w-full md:w-auto bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Delete Selected
+        </button>
       </div>
 
       {/* Bookings Table */}
@@ -190,6 +251,13 @@ const BookHistory = () => {
         <table className="min-w-full">
           <thead className="bg-orange-500">
             <tr>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/12">
+                <input
+                  type="checkbox"
+                  checked={selectedBookings.length === currentBookings.length && currentBookings.length > 0}
+                  onChange={handleSelectAll}
+                />
+              </th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/8">Room</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/8">Check-in</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/8">Check-out</th>
@@ -197,18 +265,19 @@ const BookHistory = () => {
               <th className="p-4 text-left text-gray-700 font-bold w-1/6">Guest Name</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/4">Email</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/6">Check-out Time</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/12">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-600">
+                <td colSpan="9" className="p-6 text-center text-gray-600">
                   Loading...
                 </td>
               </tr>
             ) : currentBookings.length === 0 ? (
               <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-600">
+                <td colSpan="9" className="p-6 text-center text-gray-600">
                   No booking history found.
                 </td>
               </tr>
@@ -216,9 +285,15 @@ const BookHistory = () => {
               currentBookings.map((booking) => (
                 <tr
                   key={booking.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => openModal(booking)}
+                  className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                 >
+                  <td className="p-4 text-gray-700 w-1/12">
+                    <input
+                      type="checkbox"
+                      checked={selectedBookings.includes(booking.id)}
+                      onChange={() => handleSelectBooking(booking.id)}
+                    />
+                  </td>
                   <td className="p-4 text-gray-700 w-1/8">{booking.selectedRoom}</td>
                   <td className="p-4 text-gray-700 w-1/8">{booking.checkInDate}</td>
                   <td className="p-4 text-gray-700 w-1/8">{booking.checkOutDate}</td>
@@ -228,16 +303,15 @@ const BookHistory = () => {
                   </td>
                   <td className="p-4 text-gray-700 w-1/4">{booking.guestInfo.email}</td>
                   <td className="p-4 text-gray-700 w-1/6">
-                    {booking.checkOutTimestamp?.toDate().toLocaleString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: '2-digit',
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      second: '2-digit',
-                      hour12: true,
-                    })}
+                    {booking.checkOutTimestamp?.toDate().toLocaleString()}
+                  </td>
+                  <td className="p-4 text-gray-700 w-1/12">
+                    <button
+                      onClick={() => deleteBooking(booking.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
