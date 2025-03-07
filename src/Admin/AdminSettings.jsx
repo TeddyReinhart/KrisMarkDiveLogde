@@ -41,16 +41,18 @@ function AdminSetting() {
         </div>
 
         {/* Account Section */}
-        <div className="bg-gray-200 p-6 rounded-xl shadow-md flex justify-between items-center">
+         <div className="bg-gray-200 p-6 rounded-xl shadow-md flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <User className="w-8 h-8 text-orange-500" />
-            <div>
-              <h3 className="text-xl font-semibold text-orange-500">Account</h3>
-              <p className="text-sm text-gray-600">Edit account details and profile</p>
-            </div>
-          </div>
-          <NavLink to="/account" className="text-orange-500 hover:text-orange-600">Edit</NavLink>
+          <User className="w-8 h-8 text-orange-500" />
+        <div>
+          {/* Use NavLink to redirect to the desired route */}
+          <NavLink to="/admin-home/create-user" className="text-orange-500 hover:text-orange-600">
+            <h3 className="text-xl font-semibold text-orange-500">Account</h3>
+            <p className="text-sm text-gray-600">Staff account creation form</p>
+          </NavLink>
         </div>
+      </div>
+    </div>
       </div>
     </div>
   );

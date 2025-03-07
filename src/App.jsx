@@ -21,6 +21,8 @@ import Report from "./StaffSide/Report";
 import Reports from "./Admin/Reports";
 import ComplaintReportForm from './ComplaintReportForm';
 import ReportsTable from './Admin/ReportsTable';
+import Settings from "./StaffSide/Settings";
+import AdminSetting from './Admin/AdminSettings';
 
 const App = () => {
   return (
@@ -49,6 +51,7 @@ const App = () => {
           <Route path="admin-rooms-availability" element={<RoomAvailability />} />
           <Route path="create-user" element={<Register />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="setting" element={<AdminSetting/>} />
           {/* Add more nested routes here if needed */}
         </Route>
 
@@ -67,6 +70,8 @@ const App = () => {
           <Route path="book-rooms" element={<BookRooms />} />
           <Route path="book-history" element={<BookHistory />} />
           <Route path="report" element={<Report />} />
+          <Route path="setting" element={<Settings/>} />
+          
         </Route>
 
         {/* Default Redirect to Login */}

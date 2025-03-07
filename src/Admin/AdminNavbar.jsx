@@ -100,19 +100,6 @@ function AdminNavbar() {
               </NavLink>
             </li>
 
-            <li>
-              <NavLink
-                to="/admin-home/create-user"
-                className={({ isActive }) =>
-                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full transition ${
-                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
-                  }`
-                }
-              >
-                <UserPlus className="w-6 h-6" />
-                <span>Create User</span>
-              </NavLink>
-            </li>
 
             <li>
               <NavLink
@@ -128,56 +115,26 @@ function AdminNavbar() {
               </NavLink>
             </li>
 
-            {/* Settings Dropdown */}
-            <li>
-              <div
-                className={`flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full cursor-pointer transition ${
-                  isSettingsActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
-                }`}
-                onClick={toggleSettings}
+            {/* Settings */}
+            <li className="mb-4"> 
+              <NavLink
+                to="/admin-home/setting"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
+                   isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
+                  }`
+                }
+                onClick={toggleSettings} // Toggle the settings dropdown
               >
                 <Settings className="w-6 h-6" />
                 <span>Settings</span>
-              </div>
-
-              {/* Dropdown Menu for Settings */}
-              {isSettingsOpen && (
-                <ul className="ml-6 mt-2 space-y-2">
-                  <li>
-                    <NavLink
-                      to="/admin-home/settings/general"
-                      className={({ isActive }) =>
-                        `flex items-center justify-between p-2 rounded-lg text-lg font-medium transition ${
-                          isActive ? "bg-orange-300 text-white" : "hover:bg-gray-200 text-black"
-                        }`
-                      }
-                    >
-                      <span>General</span>
-                      <span>&gt;</span>
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink
-                      to="/admin-home/settings/account"
-                      className={({ isActive }) =>
-                        `flex items-center justify-between p-2 rounded-lg text-lg font-medium transition ${
-                          isActive ? "bg-orange-300 text-white" : "hover:bg-gray-200 text-black"
-                        }`
-                      }
-                    >
-                      <span>Account</span>
-                      <span>&gt;</span>
-                    </NavLink>
-                  </li>
-                </ul>
-              )}
-            </li>
-
+                </NavLink>
+            </li>          
             {/* Logout */}
             <li>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full hover:bg-orange-500 hover:text-white transition"
+                className="flex items-center space-x-3 p-3 rounded-lg text-lg font-medium w-full hover:bg-red-400 hover:text-white transition"
               >
                 <LogOut className="w-6 h-6" />
                 <span>Logout</span>

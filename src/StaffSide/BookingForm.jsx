@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "./ConfirmationModal"; // Import the ConfirmationModal
 
 function BookingForm() {
   const { state } = useLocation();
@@ -18,7 +18,7 @@ function BookingForm() {
   const [roomChoice, setRoomChoice] = useState(selectedRoom?.name || "");
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [bookedDates, setBookedDates] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
 
   const [guestInfo, setGuestInfo] = useState({
     firstName: "",
@@ -112,7 +112,7 @@ function BookingForm() {
   };
 
   const handleModalConfirm = async () => {
-    setIsModalOpen(false);
+    setIsModalOpen(false); // Close the modal
 
     if (
       guestInfo.firstName &&
@@ -165,10 +165,7 @@ function BookingForm() {
         navigate("/"); // Navigate to the home page after successful booking
       } catch (error) {
         console.error("Error:", error);
-        alert("An error occurred. Please try again.");
       }
-    } else {
-      alert("Please fill in all required fields.");
     }
   };
 

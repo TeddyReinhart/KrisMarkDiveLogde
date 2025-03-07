@@ -113,9 +113,9 @@ function Home() {
         </div>
 
         {/* Right Column (Calendar & Booking Details) */}
-        <div className="col-span-5 space-y-6">
+        <div className="col-span-5 space-y-6 ">
           {/* Calendar Section */}
-          <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-300">
+          <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-300 ">
             <CalendarComponent
               date={date}
               setDate={setDate}

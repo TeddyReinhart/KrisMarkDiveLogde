@@ -228,17 +228,16 @@ const AdminHome = () => {
   // Colors for the pie chart
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-  // Full-Page Loader Component
-  const FullPageLoader = () => (
-    <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
-      <div className="animate-spin rounded-full h-1o w-16 border-t-4 border-purple-500"></div>
+  const DashboardLoader = () => (
+    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-purple-500"></div>
     </div>
   );
 
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-100 p-6 relative">
-      {/* Full-Page Loader */}
-      {loading && <FullPageLoader />}
+      {/* Loader */}
+      {loading && <DashboardLoader/>}
 
       {/* Header Section */}
       <div className="w-full max-w-6xl mb-8 flex justify-between items-center">

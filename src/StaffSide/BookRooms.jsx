@@ -21,7 +21,7 @@ const BookRooms = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Number of items per page
+  const [itemsPerPage] = useState(5); // Number of items per page
 
   // Fetch bookings from Firestore
   const fetchBookings = async () => {
@@ -151,7 +151,6 @@ const BookRooms = () => {
       fetchBookings(); // Refresh the list of bookings
     } catch (error) {
       console.error("Error during check-out and payment: ", error);
-      alert("Failed to complete check-out and payment. Please try again.");
     }
   };
 
@@ -213,7 +212,7 @@ const BookRooms = () => {
 };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 h-screen">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Manage Bookings</h1>
 
       {/* Filter and Search Bar */}
@@ -241,7 +240,7 @@ const BookRooms = () => {
 
       {/* Bookings Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
-        <table className="min-w-full">
+        <table className="w-full">
           <thead className="bg-orange-500">
             <tr>
               <th className="p-4 text-left text-gray-700 font-bold">Room</th>
@@ -256,11 +255,11 @@ const BookRooms = () => {
         
         <tbody>
           {isLoading ? (
-            <tr>
-              <td colSpan="7" className="h-64 w-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+           
+              <td colSpan="7" className="h-64 w-[100%] flex items-center justify-center absolute">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500 "></div>
               </td>
-            </tr>
+          
           ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="7" className="p-6 text-center text-gray-600">
@@ -483,7 +482,7 @@ const BookRooms = () => {
 
       {/* Confirmation Modal */}
       {isConfirmationModalOpen && (
-  <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50 shadow-lg">
+  <div className="fixed inset-0 bg-opacity-75 flex justify-center items-center z-50 shadow-lg">
     <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
       <h3 className="text-lg font-semibold">Payment Confirmed!</h3>
       <p className="text-gray-600 my-4">

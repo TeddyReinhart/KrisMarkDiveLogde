@@ -115,7 +115,7 @@ const Report = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {isSubmitting ? "Submitting..." : "Submit Report"}
             </button>
@@ -125,7 +125,7 @@ const Report = () => {
       
       {/* Confirmation Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50 shadow-lg">          
+        <div className="fixed inset-0 bg-opacity-100 flex justify-center items-center z-50 shadow-lg">          
           <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
             <h3 className="text-lg font-semibold">Report Submitted!</h3>
             <p className="text-gray-600 my-4">Your maintenance report has been successfully submitted.</p>

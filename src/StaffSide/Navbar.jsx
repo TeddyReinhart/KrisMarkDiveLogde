@@ -42,7 +42,7 @@ function Navbar() {
               end
               className={({ isActive }) =>
                 `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
-                  isActive ? "bg-orange-500 text-white" : "text-gray-700"
+                  isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
                 }`
               }
             >
@@ -57,7 +57,7 @@ function Navbar() {
                 to="/home/book-rooms"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
-                    isActive ? "bg-orange-500 text-white" : "text-gray-700"
+                   isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
                   }`
                 }
               >
@@ -72,7 +72,7 @@ function Navbar() {
                 to="/home/book-history"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
-                    isActive ? "bg-orange-500 text-white" : "text-gray-700"
+                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
                   }`
                 }
               >
@@ -87,7 +87,7 @@ function Navbar() {
                 to="/home/report"
                 className={({ isActive }) =>
                   `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
-                    isActive ? "bg-orange-500 text-white" : "text-gray-700"
+                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
                   }`
                 }
               >
@@ -97,51 +97,26 @@ function Navbar() {
             </li>
 
             {/* Settings */}
-            <li className="mb-4">
-              <div
-                className={`flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 cursor-pointer ${
-                  isSettingsOpen ? "bg-orange-500 text-white" : "text-gray-700 hover:bg-orange-500 hover:text-white"
-                }`}
+            <li className="mb-4"> 
+              <NavLink
+                to="/home/setting"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
+                    isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
+                  }`
+                }
                 onClick={toggleSettings} // Toggle the settings dropdown
               >
                 <Settings className="w-6 h-6" />
                 <span>Settings</span>
-              </div>
-
-              {/* Dropdown Menu for Settings */}
-              {isSettingsOpen && (
-                <div className="pl-10 mt-2 space-y-2">
-                  <NavLink
-                    to="/settings/general"
-                    className={({ isActive }) =>
-                      `flex items-center justify-between p-2 rounded-lg text-lg font-semibold transition-all duration-200 ${
-                        isActive ? "bg-orange-300 text-white" : "text-gray-700 hover:bg-orange-300 hover:text-white"
-                      }`
-                    }
-                  >
-                    <span>General</span>
-                    <span>&gt;</span> {/* Right arrow */}
-                  </NavLink>
-                  <NavLink
-                    to="/settings/account"
-                    className={({ isActive }) =>
-                      `flex items-center justify-between p-2 rounded-lg text-lg font-semibold transition-all duration-200 ${
-                        isActive ? "bg-orange-300 text-white" : "text-gray-700 hover:bg-orange-300 hover:text-white"
-                      }`
-                    }
-                  >
-                    <span>Account</span>
-                    <span>&gt;</span> {/* Right arrow */}
-                  </NavLink>
-                </div>
-              )}
+                </NavLink>
             </li>
 
             {/* Logout */}
             <li>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white text-gray-700"
+                className="flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-red-500 hover:text-white text-black"
               >
                 <LogOut className="w-6 h-6" />
                 <span>Logout</span>
