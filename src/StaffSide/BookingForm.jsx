@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
+import { useLocation, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
-import ConfirmationModal from "./ConfirmationModal"; // Import the modal component
+import ConfirmationModal from "./ConfirmationModal";
 
 function BookingForm() {
   const { state } = useLocation();
   const selectedRoom = state?.selectedRoom;
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [checkInDate, setCheckInDate] = useState(null);
@@ -18,7 +18,7 @@ function BookingForm() {
   const [roomChoice, setRoomChoice] = useState(selectedRoom?.name || "");
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [bookedDates, setBookedDates] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [guestInfo, setGuestInfo] = useState({
     firstName: "",
@@ -43,7 +43,6 @@ function BookingForm() {
       const checkIn = new Date(booking.checkInDate);
       const checkOut = new Date(booking.checkOutDate);
 
-      // Add all dates between check-in and check-out to the bookedDates array
       for (let date = checkIn; date <= checkOut; date.setDate(date.getDate() + 1)) {
         dates.push(new Date(date));
       }
@@ -114,7 +113,7 @@ function BookingForm() {
 
   const handleModalConfirm = async () => {
     setIsModalOpen(false);
-  
+
     if (
       guestInfo.firstName &&
       guestInfo.lastName &&
@@ -135,12 +134,16 @@ function BookingForm() {
           guestInfo,
           timestamp: new Date(),
         };
-  
-        // Send email using the backend URL from .env
-        const emailResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/send-email`, {
-          method: 'POST',
+
+        // Save booking data to Firestore
+        const bookingsRef = collection(db, "bookings");
+        await addDoc(bookingsRef, bookingData);
+
+        // Send booking confirmation email
+        const emailResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/send-booking-confirmation`, {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             email: guestInfo.email,
@@ -152,20 +155,20 @@ function BookingForm() {
             totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
           }),
         });
-  
+
         if (emailResponse.ok) {
-          console.log('Email sent successfully');
+          console.log("Booking confirmation email sent successfully");
         } else {
-          console.error('Failed to send email');
+          console.error("Failed to send booking confirmation email");
         }
-  
-        navigate('/');
+
+        navigate("/"); // Navigate to the home page after successful booking
       } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
       }
     } else {
-      alert('Please fill in all required fields.');
+      alert("Please fill in all required fields.");
     }
   };
 
@@ -217,7 +220,7 @@ function BookingForm() {
                 placeholderText="Select check-in date"
                 dateFormat="MMMM d, yyyy"
                 minDate={new Date()}
-                filterDate={(date) => !isDateBooked(date)} // Disable booked dates
+                filterDate={(date) => !isDateBooked(date)}
               />
             </div>
             <div>
@@ -229,7 +232,7 @@ function BookingForm() {
                 placeholderText="Select check-out date"
                 dateFormat="MMMM d, yyyy"
                 minDate={checkInDate || new Date()}
-                filterDate={(date) => !isDateBooked(date)} // Disable booked dates
+                filterDate={(date) => !isDateBooked(date)}
               />
             </div>
           </div>
@@ -375,39 +378,37 @@ function BookingForm() {
 
       {/* Step 3: Confirmation */}
       {step === 3 && (
-            <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-lg">
-            <h2 className="text-3xl font-bold mb-6 text-gray-800">Step 3: Confirm Booking</h2>
-          
-            <div className="space-y-8">
-              {/* Booking Summary */}
-              <div>
-                <h3 className="text-2xl font-semibold mb-4 text-gray-800">Booking Summary</h3>
-                <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
-                  <p className="text-lg font-semibold text-gray-900">{selectedRoom?.name}</p>
-                  <p className="text-gray-700"><span className="font-medium">Rate per Day:</span> ₱{selectedRoom?.ratePerDay?.toLocaleString()}</p>
-                  <p className="text-gray-700"><span className="font-medium">Check-in:</span> {checkInDate?.toDateString()}</p>
-                  <p className="text-gray-700"><span className="font-medium">Check-out:</span> {checkOutDate?.toDateString()}</p>
-                  <p className="text-gray-700"><span className="font-medium">Number of Nights:</span> {numberOfNights}</p>
-                  <p className="text-gray-700"><span className="font-medium">Number of Guests:</span> {numberOfGuests}</p>
-                  <p className="text-gray-900 font-semibold text-lg"><span className="font-medium">Total Cost:</span> ₱{totalCost.toLocaleString()}</p>
-                </div>
-              </div>
-          
-              {/* Guest Information */}
-              <div>
-                <h3 className="text-2xl font-semibold mb-4 text-gray-800">Guest Information</h3>
-                <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
-                  <p className="text-gray-700"><span className="font-medium">First Name:</span> {guestInfo.firstName}</p>
-                  <p className="text-gray-700"><span className="font-medium">Last Name:</span> {guestInfo.lastName}</p>
-                  <p className="text-gray-700"><span className="font-medium">Email:</span> {guestInfo.email}</p>
-                  <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> {guestInfo.mobileNumber}</p>
-                  <p className="text-gray-700"><span className="font-medium">Gender:</span> {guestInfo.gender}</p>
-                  <p className="text-gray-700"><span className="font-medium">Special Request:</span> {guestInfo.specialRequest || "None"}</p>
-                </div>
+        <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-lg">
+          <h2 className="text-3xl font-bold mb-6 text-gray-800">Step 3: Confirm Booking</h2>
+          <div className="space-y-8">
+            {/* Booking Summary */}
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-gray-800">Booking Summary</h3>
+              <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
+                <p className="text-lg font-semibold text-gray-900">{selectedRoom?.name}</p>
+                <p className="text-gray-700"><span className="font-medium">Rate per Day:</span> ₱{selectedRoom?.ratePerDay?.toLocaleString()}</p>
+                <p className="text-gray-700"><span className="font-medium">Check-in:</span> {checkInDate?.toDateString()}</p>
+                <p className="text-gray-700"><span className="font-medium">Check-out:</span> {checkOutDate?.toDateString()}</p>
+                <p className="text-gray-700"><span className="font-medium">Number of Nights:</span> {numberOfNights}</p>
+                <p className="text-gray-700"><span className="font-medium">Number of Guests:</span> {numberOfGuests}</p>
+                <p className="text-gray-900 font-semibold text-lg"><span className="font-medium">Total Cost:</span> ₱{totalCost.toLocaleString()}</p>
               </div>
             </div>
-             {/* Buttons */}
-             <div className="mt-8 flex justify-between">
+
+            {/* Guest Information */}
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-gray-800">Guest Information</h3>
+              <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
+                <p className="text-gray-700"><span className="font-medium">First Name:</span> {guestInfo.firstName}</p>
+                <p className="text-gray-700"><span className="font-medium">Last Name:</span> {guestInfo.lastName}</p>
+                <p className="text-gray-700"><span className="font-medium">Email:</span> {guestInfo.email}</p>
+                <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> {guestInfo.mobileNumber}</p>
+                <p className="text-gray-700"><span className="font-medium">Gender:</span> {guestInfo.gender}</p>
+                <p className="text-gray-700"><span className="font-medium">Special Request:</span> {guestInfo.specialRequest || "None"}</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 flex justify-between">
             <button
               type="button"
               className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition duration-200"
@@ -425,15 +426,15 @@ function BookingForm() {
           </div>
         </div>
       )}
-        {/* Confirmation Modal */}
-        <ConfirmationModal
-                isOpen={isModalOpen}
-                onClose={handleModalClose}
-                onConfirm={handleModalConfirm}
-              />
-            </div>
-          );
-        }
 
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onConfirm={handleModalConfirm}
+      />
+    </div>
+  );
+}
 
 export default BookingForm;
