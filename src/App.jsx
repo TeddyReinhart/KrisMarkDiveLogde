@@ -23,15 +23,17 @@ import ComplaintReportForm from './ComplaintReportForm';
 import ReportsTable from './Admin/ReportsTable';
 import Settings from "./StaffSide/Settings";
 import AdminSetting from './Admin/AdminSettings';
+import PublicHome from "./PublicPage/PublicHome"; 
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Redirect root path to /home */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        {/* Redirect root path to /public-home */}
+        <Route path="/" element={<Navigate to="/public-home" replace />} />
 
         {/* Public Routes */}
+        <Route path="/public-home" element={<PublicHome/>} /> 
         <Route path="/Report" element={<ComplaintReportForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -71,11 +73,10 @@ const App = () => {
           <Route path="book-history" element={<BookHistory />} />
           <Route path="report" element={<Report />} />
           <Route path="setting" element={<Settings/>} />
-          
         </Route>
 
-        {/* Default Redirect to Login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Default Redirect to Public Home */}
+        <Route path="*" element={<Navigate to="/public-home" replace />} />
       </Routes>
     </Router>
   );
