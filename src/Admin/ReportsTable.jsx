@@ -32,7 +32,7 @@ function ReportsTable() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-lg border border-gray-200">
-        <h2 className="text-3xl font-bold mb-6 text-center">Complaint Reports</h2>
+        <h2 className="text-3xl font-bold mb-6 ">Complaint Reports</h2>
 
         {/* Error Message */}
         {error && (
@@ -43,32 +43,32 @@ function ReportsTable() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex justify-center mt-10">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-        </div>
-        
+          <div className="flex justify-center items-center mt-10 gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-orange-500 shadow-md"></div>
+            <p className="text-gray-600 font-medium">Loading...</p>
+          </div>
         ) : (
           /* Complaints Table */
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
+                <tr className="bg-orange-400">
+                  <th className="px-6 py-3 border-b border-gray-200 text-left text-m font-semibold text-gray-700">
                     Room
                   </th>
-                  <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-6 py-3 border-b border-gray-200 text-left text-m font-semibold text-gray-700">
                     Title
                   </th>
-                  <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-6 py-3 border-b border-gray-200 text-left text-m font-semibold text-gray-700">
                     Description
                   </th>
-                  <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-6 py-3 border-b border-gray-200 text-left text-m font-semibold text-gray-700">
                     Date
                   </th>
-                  <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-6 py-3 border-b border-gray-200 text-left text-m font-semibold text-gray-700">
                     Priority
                   </th>
-                  <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-6 py-3 border-b border-gray-200 text-left text-m font-semibold text-gray-700">
                     Created At
                   </th>
                 </tr>

@@ -24,9 +24,8 @@ import ReportsTable from './Admin/ReportsTable';
 import Settings from "./StaffSide/Settings";
 import AdminSetting from './Admin/AdminSettings';
 import PublicHome from "./PublicPage/PublicHome"; 
-import Overview from "./PublicPage/Overview";
-import Rooms from "./PublicPage/Rooms";
-import Offers from "./PublicPage/Offers";
+import PublicBooking from "./PublicPage/PublicBooking";
+
 
 const App = () => {
   return (
@@ -37,9 +36,7 @@ const App = () => {
 
         {/* Public Routes */}
         <Route path="/public-home" element={<PublicHome/>} /> 
-        <Route path="/overview" element={<Overview />} />
-        <Route path="/rooms" element={<Rooms />} />
-        <Route path="/offers" element={<Offers />} />
+        <Route path="/public-booking" element={<PublicBooking />} />
         <Route path="/Report" element={<ComplaintReportForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

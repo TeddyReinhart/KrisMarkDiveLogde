@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from "./PublicNavbar";
 import Footer from "./Footer";
-import { FaCalendarAlt, FaUsers, FaBed, FaArrowRight } from "react-icons/fa";
+import { FaCalendarAlt, FaUsers, FaBed, FaArrowRight, FaMapMarkerAlt, FaPhone, FaEnvelope, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import backgroundImage from "./Images/Background.png";
 import underwaterImage from './Images/Picture1.png';
 import contactImage from './Images/ContactUsPic.png';
@@ -20,6 +20,16 @@ const PublicHome = () => {
   const [checkOutDate, setCheckOutDate] = useState("");
   const [hoveredImage, setHoveredImage] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [activeQuestion, setActiveQuestion] = useState(null);
+
+  // Toggle FAQ accordion
+  const toggleQuestion = (index) => {
+    if (activeQuestion === index) {
+      setActiveQuestion(null);
+    } else {
+      setActiveQuestion(index);
+    }
+  };
 
   const roomImages = [
     {
@@ -79,44 +89,53 @@ const PublicHome = () => {
   ];
 
   const offers = [
-    {
-      id: 1,
-      title: "The Coolest Way to Beat the Heat",
-      subtitle: "Stay & Enjoy 2025-2026",
-      image: "/images/cool-room.jpg",
-      description: "Experience comfort in our climate-controlled rooms with a refreshing coastal theme.",
-      price: "₱ 2,000.00",
-      features: ["Air Conditioning", "Sea View", "Free WiFi"]
-    },
-    {
-      id: 2,
-      title: "A Staycation to Remember",
-      subtitle: "2025-2026",
-      image: "/images/cozy-room.jpg",
-      description: "Our premium rooms offer a perfect blend of comfort and luxury for memorable stays.",
-      price: "₱ 1,500.00",
-      features: ["Fireplace", "King Size Bed", "Breakfast Included"]
-    },
-    {
-      id: 3,
-      title: "The Ultimate Summer Break",
-      subtitle: "2025-2026",
-      image: "/images/bright-room.jpg",
-      description: "Spacious rooms with modern amenities for the perfect summer escape.",
-      price: "₱ 1,500.00",
-      features: ["Balcony", "Mini Bar", "Pool Access"]
-    },
+    { id: 1, title: "Standard Double Room", subtitle: "Cozy comfort for two", price: "₱1,500", image: Pic4 },
+    { id: 2, title: "Twin Room", subtitle: "Ideal for friends or family", price: "₱1,500", image: Pic2 },
+    { id: 3, title: "Triple Room", subtitle: "Extra space for extra comfort", price: "₱2,000", image: Pic5 },
     {
       id: 4,
-      title: "Your Ticket to Relaxation",
-      subtitle: "Book your Staycation & Save! 2025-2026",
-      image: "/images/twin-room.jpg",
-      description: "Ideal for families and groups, our twin rooms offer comfort and value.",
-      price: "₱ 3,800.00",
-      features: ["Twin Beds", "Family Friendly", "Complimentary Breakfast"]
+      title: "Family Room",
+      subtitle: "Beachside retreat for the whole family",
+      description: "A spacious and relaxing stay just steps from the beach, perfect for quality family time.",
+      features: ["Private beach access", "Scenic ocean views", "Outdoor play area", "Bonfire & BBQ setup"],
+      price: "₱3,800",
+      image: Pic7,
+    },
+  ];
+  
+  
+
+  // FAQ data
+  const faqData = [
+    {
+      question: "How can I book a room?",
+      answer: "You can book a room directly through our website by using the reservation form, by emailing us at krismarkdivelodgemoalboal@gmail.com, or by calling us at 0947 520 3454. We recommend booking in advance to secure your preferred dates."
+    },
+    {
+      question: "What are the check-in and check-out times?",
+      answer: "Check-in time is 2:00 PM and check-out time is 12:00 PM. Early check-in or late check-out may be available upon request, subject to availability and additional fees."
+    },
+    {
+      question: "Do you have smoking and non-smoking rooms?",
+      answer: "Yes, we offer both smoking and non-smoking rooms. Please specify your preference during booking. Smoking in non-smoking rooms will result in an additional cleaning fee."
+    },
+    {
+      question: "Can I change or upgrade my room after check-in?",
+      answer: "Room changes or upgrades after check-in are subject to availability. Please contact our front desk to inquire about available options and applicable fees."
+    },
+    {
+      question: "What payment methods do you accept?",
+      answer: "We accept cash (Philippine Peso), major credit cards (Visa, Mastercard), and bank transfers. A valid ID and credit card are required for incidental charges upon check-in."
+    },
+    {
+      question: "What is the best season to visit your hotel?",
+      answer: "The best time to visit Moalboal is during the dry season from November to May. The waters are clearest for diving between March and May. However, Krismark Dive Lodge is open year-round and offers a wonderful experience in any season."
+    },
+    {
+      question: "Does Krismark Dive Lodge allow pets?",
+      answer: "We regret that pets are not allowed at our property, with the exception of service animals. We appreciate your understanding."
     }
   ];
-
 
   return (
     <div>
@@ -198,7 +217,7 @@ const PublicHome = () => {
               </div>
 
               {/* Check Availability Button */}
-              <button className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center shadow-lg hover:shadow-xl ml-auto">
+              <button className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center shadow-lg hover:shadow-xl ml-auto cursor-pointer">
                 Check Availability
                 <FaArrowRight className="ml-2" />
               </button>
@@ -208,6 +227,7 @@ const PublicHome = () => {
       </section>
 
       <section id="overview" className="py-20 px-4 bg-gradient-to-b from-white to-blue-50">
+        {/* Overview content stays the same */}
         <div className="container mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-10 max-w-6xl mx-auto">
             {/* Left side - Image */}
@@ -241,7 +261,7 @@ const PublicHome = () => {
 
               {/* Call to action buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <a href="#rooms" className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-full font-medium transition-colors duration-200 text-center">
+                <a href="#rooms" className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-full font-medium transition-colors duration-200 text-center cursor-pointer">
                   Explore Our Rooms
                 </a>
                 <a href="#contact" className="bg-blue-900 hover:bg-blue-800 text-white py-3 px-6 rounded-full font-medium transition-colors duration-200 text-center">
@@ -289,6 +309,7 @@ const PublicHome = () => {
         </div>
       </section>
 
+      {/* Rooms section stays the same */}
       <section id="rooms" className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -343,6 +364,7 @@ const PublicHome = () => {
         </div>
       </section>
 
+      {/* Offers section stays the same */}
       <section id="offers" className="min-h-screen flex items-center justify-center bg-yellow-100">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="text-center mb-12">
@@ -367,7 +389,7 @@ const PublicHome = () => {
                   />
                   {hoveredCard === offer.id && (
                     <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                      <button className="bg-white text-gray-800 px-4 py-2 rounded-full font-medium hover:bg-orange-400 hover:text-white transition-colors">
+                      <button className="bg-white text-gray-800 px-4 py-2 rounded-full font-medium hover:bg-orange-400 hover:text-white transition-colors cursor-pointer">
                         Book Now
                       </button>
                     </div>
@@ -378,7 +400,6 @@ const PublicHome = () => {
                   <p className="text-sm text-gray-500 mb-2">{offer.subtitle}</p>
                   <div className="flex items-center justify-between mt-4">
                     <span className="font-bold text-orange-600 text-lg">{offer.price}<span className="text-xs">/night</span></span>
-                    <span className="text-sm text-gray-500">Limited offer</span>
                   </div>
                 </div>
               </div>
@@ -400,7 +421,7 @@ const PublicHome = () => {
                   />
                   {hoveredCard === 4 && (
                     <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                      <button className="bg-white text-gray-800 px-6 py-3 rounded-full font-medium hover:bg-orange-400 hover:text-white transition-colors">
+                      <button className="bg-white text-gray-800 px-6 py-3 rounded-full font-medium hover:bg-orange-400 hover:text-white transition-colors cursor-pointer">
                         Book Now
                       </button>
                     </div>
@@ -422,69 +443,118 @@ const PublicHome = () => {
                   </ul>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-orange-600 text-2xl">{offers[3].price}<span className="text-sm">/night</span></span>
-                    <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-colors">
-                      Book & Save
-                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="text-center mt-12">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full font-medium transition-colors">
-              View All Staycation Packages
-            </button>
-          </div>
         </div>
       </section>
 
-      <section id="contact" className="min-h-screen flex items-center justify-center bg-red-100">
-        <div className="w-full max-w-4xl mx-auto">
-          {/* Hero banner with underwater diving image */}
-          <div className="relative h-72">
-            <img 
-              src={contactImage}
-              alt="Underwater coral reef with diver" 
-              className="w-full h-full object-cover"
-            />
-            
-            {/* Overlay text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
-              <h1 className="text-3xl font-bold">CONTACT KRISMARK</h1>
-              <h2 className="text-2xl font-bold mb-2">DIVE LODGE</h2>
-              <p className="text-lg">We Look Forward To Hearing From You</p>
-            </div>
-          </div>
-    
-          {/* Contact information section */}
-          <div className="bg-white p-8">
+      {/*Conctact Us section */}
+      <section id="contact" className="min-h-screen flex flex-col items-center justify-center bg-red-100 py-12">
+      {/* Full-width Hero Banner */}
+      <div className="relative w-full h-96 overflow-hidden">
+        <img 
+          src={contactImage}
+          alt="Underwater coral reef with diver"
+          className="w-full h-full object-cover transform transition-transform duration-500 hover:scale-105"
+        />
+
+        {/* Overlay text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center bg-opacity-40 px-4">
+          <h1 className="text-4xl md:text-5xl font-bold">CONTACT KRISMARK</h1>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">DIVE LODGE</h2>
+          <h3 className="text-lg md:text-xl">We Look Forward To Hearing From You</h3>
+        </div>
+      </div>
+
+      {/* Contact Information Section */}
+      <div className="w-full max-w-5xl bg-white p-8 rounded-lg shadow-lg mt-8">
             <h2 className="text-xl font-bold text-center mb-6">We Are Here To Help</h2>
             
-            <p className="text-center mb-8">
+            <p className="text-center mb-8 text-gray-600">
               No matter what your inquiry is regarding, there will always be someone to help you at Krismark Dive Lodge. Need to make a hotel booking? Have a question about a hotel rate? You will find all the right details below.
             </p>
             
-            <div className="max-w-xl mx-auto space-y-6">
+            <div className="w-full max-w-4xl mx-auto">
               {/* Call us section */}
-              <div className="text-center">
-                <h3 className="font-bold mb-2">CALL US</h3>
-                <p>For general inquiries, please call 09475203454</p>
+              <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                <h3 className="font-bold mb-2 text-blue-600 flex items-center justify-center space-x-2">
+                  <FaPhone className="text-orange-600 w-5 h-5" /> 
+                  <span>CALL US</span>
+                </h3>
+                <p className="text-gray-700">
+                  For general inquiries, please call{' '}
+                  <span className="font-semibold">09475203454</span>
+                </p>
               </div>
-              
+
               {/* Email us section */}
-              <div className="text-center">
-                <h3 className="font-bold mb-2">EMAIL US</h3>
-                <p>Please allow up to 48 hours for a response.</p>
-                <p>Hotel reservations: krismarkdivelodgemoalboal@gmail.com</p>
-              </div>
-            </div>
+              <div className="text-center p-6 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                <h3 className="font-bold mb-2 text-blue-600 flex items-center justify-center space-x-2">
+                  <FaEnvelope className="text-orange-600 w-5 h-5" /> 
+                  <span>EMAIL US</span>
+                </h3>
+                <p className="text-gray-700">Please allow up to 48 hours for a response.</p>
+                <p className="text-gray-700">
+                  Hotel reservations: <span className="font-semibold">krismarkdivelodgemoalboal@gmail.com</span>
+                </p>
+
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section id="Faqs" className="min-h-screen flex items-center justify-center bg-purple-100">
-        <h1 className="text-4xl font-bold">FAQS Section</h1>
+
+     {/* FAqs section */}
+      <section id="Faqs" className="py-16 px-4 bg-purple-100">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-900">FREQUENTLY ASKED QUESTIONS</h2>
+            <div className="w-32 h-1 bg-orange-500 mt-3 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Everything you need to know about your stay at Krismark Dive Lodge</p>
+          </div>
+          
+          <div className="space-y-4">
+            {faqData.map((faq, index) => (
+              <div 
+                key={index} 
+                className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300"
+              >
+                <button
+                  onClick={() => toggleQuestion(index)}
+                  className="w-full p-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-medium text-blue-900">{faq.question}</span>
+                  {activeQuestion === index ? 
+                    <FaChevronUp className="text-orange-500" /> : 
+                    <FaChevronDown className="text-orange-500" />
+                  }
+                </button>
+                
+                <div 
+                  className={`px-4 transition-all duration-300 overflow-hidden ${
+                    activeQuestion === index ? 'max-h-96 pb-4' : 'max-h-0'
+                  }`}
+                >
+                  <p className="text-gray-700">{faq.answer}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-10 text-center">
+            <p className="mb-4 text-gray-700">Still have questions?</p>
+            <a 
+              href="#contact" 
+              className="inline-flex items-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-medium transition-colors"
+            >
+              Contact Us
+              <FaArrowRight className="ml-2" />
+            </a>
+          </div>
+        </div>
       </section>
 
       <Footer />

@@ -12,6 +12,11 @@ const BookHistory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isLoading, setIsLoading] = useState(true); // State to indicate loading
   const [selectedBookings, setSelectedBookings] = useState([]); // State to store selected bookings for deletion
+  
+  // Confirmation modal state
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState(''); // 'single' or 'multiple'
+  const [bookingToDelete, setBookingToDelete] = useState(null);
 
   // Time Period Filter State
   const [timePeriod, setTimePeriod] = useState("monthly"); // "monthly" or "yearly"
@@ -117,6 +122,50 @@ const BookHistory = () => {
     setSelectedBooking(null);
   };
 
+  // Open confirmation modal for deletion
+  const openConfirmModal = (type, id = null) => {
+    if (type === 'multiple' && selectedBookings.length === 0) {
+      alert("No bookings selected.");
+      return;
+    }
+    
+    setDeleteType(type);
+    if (type === 'single') {
+      setBookingToDelete(id);
+    }
+    setIsConfirmModalOpen(true);
+  };
+
+  // Close confirmation modal
+  const closeConfirmModal = () => {
+    setIsConfirmModalOpen(false);
+    setDeleteType('');
+    setBookingToDelete(null);
+  };
+
+  // Delete selected bookings
+  const deleteSelectedBookings = async () => {
+    try {
+      if (deleteType === 'multiple') {
+        for (const id of selectedBookings) {
+          await deleteDoc(doc(db, "bookingHistory", id));
+        }
+        setBookings(bookings.filter((booking) => !selectedBookings.includes(booking.id)));
+        setSelectedBookings([]); // Clear selection
+      } else if (deleteType === 'single' && bookingToDelete) {
+        await deleteDoc(doc(db, "bookingHistory", bookingToDelete));
+        setBookings(bookings.filter((booking) => booking.id !== bookingToDelete));
+      }
+      
+      fetchBookingHistory(); // Refresh data
+      closeConfirmModal();
+    } catch (error) {
+      console.error("Error deleting bookings: ", error);
+      alert("Failed to delete bookings. Please try again.");
+      closeConfirmModal();
+    }
+  };
+
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -143,42 +192,6 @@ const BookHistory = () => {
       setSelectedBookings([]); // Deselect all
     } else {
       setSelectedBookings(currentBookings.map((booking) => booking.id)); // Select all
-    }
-  };
-
-  // Delete selected bookings
-  const deleteSelectedBookings = async () => {
-    if (selectedBookings.length === 0) {
-      alert("No bookings selected.");
-      return;
-    }
-
-    if (window.confirm("Are you sure you want to delete the selected bookings?")) {
-      try {
-        for (const id of selectedBookings) {
-          await deleteDoc(doc(db, "bookingHistory", id));
-        }
-        setBookings(bookings.filter((booking) => !selectedBookings.includes(booking.id)));
-        setSelectedBookings([]); // Clear selection
-        fetchBookingHistory(); // Refresh data
-      } catch (error) {
-        console.error("Error deleting bookings: ", error);
-        alert("Failed to delete bookings. Please try again.");
-      }
-    }
-  };
-
-  // Delete a single booking
-  const deleteBooking = async (id) => {
-    if (window.confirm("Are you sure you want to delete this booking?")) {
-      try {
-        await deleteDoc(doc(db, "bookingHistory", id));
-        setBookings(bookings.filter((booking) => booking.id !== id));
-        fetchBookingHistory(); // Refresh data
-      } catch (error) {
-        console.error("Error deleting booking: ", error);
-        alert("Failed to delete booking. Please try again.");
-      }
     }
   };
 
@@ -239,7 +252,7 @@ const BookHistory = () => {
           Export to Excel
         </button>
         <button
-          onClick={deleteSelectedBookings}
+          onClick={() => openConfirmModal('multiple')}
           className="w-full md:w-auto bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
         >
           Delete Selected
@@ -272,8 +285,8 @@ const BookHistory = () => {
             {isLoading ? (
               <tr>
                 <td colSpan="7" className="h-64 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-            </td>
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+                </td>
               </tr>
             ) : currentBookings.length === 0 ? (
               <tr>
@@ -307,7 +320,7 @@ const BookHistory = () => {
                   </td>
                   <td className="p-4 text-gray-700 w-1/12">
                     <button
-                      onClick={() => deleteBooking(booking.id)}
+                      onClick={() => openConfirmModal('single', booking.id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       Delete
@@ -351,7 +364,7 @@ const BookHistory = () => {
 
       {/* Modal for Full Details */}
       {isModalOpen && selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg w-full max-w-2xl shadow-lg">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Booking Details</h2>
             <div className="space-y-4 text-gray-700">
@@ -403,6 +416,35 @@ const BookHistory = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Deletion */}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg w-full max-w-md shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Confirm Deletion</h2>
+            <p className="mb-6 text-gray-700">
+              {deleteType === 'multiple' 
+                ? `Are you sure you want to delete ${selectedBookings.length} selected booking(s)?` 
+                : 'Are you sure you want to delete this booking?'
+              }
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={closeConfirmModal}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteSelectedBookings}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

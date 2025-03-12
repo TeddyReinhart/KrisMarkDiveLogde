@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { uploadImageToCloudinary } from "../Utils/uploadImageToCloudinary";
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs } from "firebase/firestore";
-import { Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Checkbox, Select } from "../Layout/Components";
-import { PlusCircle, Trash2, Edit, Image } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Input, Label, Checkbox, Select } from "../Layout/Components";
+import { PlusCircle, Trash2, CheckCircle, Edit, Image, Wifi, ShowerHead, Users, DollarSign } from "lucide-react";
 import { app } from "../Firebase/Firebase";
 
 const db = getFirestore(app);
@@ -12,9 +11,12 @@ export default function AdminRoomManagement() {
   const [rooms, setRooms] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState(null);
   const [formData, setFormData] = useState({
     id: null,
     name: "",
@@ -23,6 +25,7 @@ export default function AdminRoomManagement() {
     bathroom: true,
     status: "Available",
     ratePerDay: 0,
+    description: "",
   });
 
   // Fetch rooms from Firebase on component mount
@@ -37,7 +40,6 @@ export default function AdminRoomManagement() {
         setRooms(roomsData);
       } catch (error) {
         console.error("Error fetching rooms:", error);
-        alert("Failed to fetch rooms. Please try again.");
       }
     };
 
@@ -72,6 +74,7 @@ export default function AdminRoomManagement() {
       bathroom: true,
       status: "Available",
       ratePerDay: 0,
+      description: "",
     });
     setSelectedFile(null);
     setPreview("");
@@ -97,32 +100,34 @@ export default function AdminRoomManagement() {
         bathroom: formData.bathroom,
         status: formData.status,
         ratePerDay: parseFloat(formData.ratePerDay),
+        description: formData.description || "",
       };
 
       const docRef = await addDoc(collection(db, "rooms"), newRoom);
 
       setRooms([...rooms, { id: docRef.id, ...newRoom }]);
-
       resetForm();
       setIsAddModalOpen(false);
+      setIsConfirmModalOpen(true);
     } catch (error) {
       console.error("Error adding room:", error);
-      alert("Failed to add room. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   // Delete a room
-  const deleteRoom = async (id) => {
-    if (window.confirm("Are you sure you want to delete this room?")) {
-      try {
-        await deleteDoc(doc(db, "rooms", id));
-        setRooms(rooms.filter((room) => room.id !== id));
-      } catch (error) {
-        console.error("Error deleting room:", error);
-        alert("Failed to delete room. Please try again.");
-      }
+  const deleteRoom = async () => {
+    if (!roomToDelete) return;
+    
+    try {
+      await deleteDoc(doc(db, "rooms", roomToDelete));
+      setRooms(rooms.filter((room) => room.id !== roomToDelete));
+      setIsDeleteModalOpen(false);
+      setRoomToDelete(null);
+      setIsConfirmModalOpen(true);
+    } catch (error) {
+      console.error("Error deleting room:", error);
     }
   };
 
@@ -136,8 +141,15 @@ export default function AdminRoomManagement() {
       bathroom: room.bathroom,
       status: room.status,
       ratePerDay: room.ratePerDay,
+      description: room.description || "",
     });
     setIsEditModalOpen(true);
+  };
+
+  // Open delete confirmation modal
+  const openDeleteModal = (roomId) => {
+    setRoomToDelete(roomId);
+    setIsDeleteModalOpen(true);
   };
 
   // Edit an existing room
@@ -151,6 +163,7 @@ export default function AdminRoomManagement() {
         bathroom: formData.bathroom,
         status: formData.status,
         ratePerDay: parseFloat(formData.ratePerDay),
+        description: formData.description || "",
       });
 
       const updatedRooms = rooms.map((room) =>
@@ -159,10 +172,24 @@ export default function AdminRoomManagement() {
       setRooms(updatedRooms);
 
       setIsEditModalOpen(false);
+      setIsConfirmModalOpen(true);
       resetForm();
     } catch (error) {
       console.error("Error updating room:", error);
-      alert("Failed to update room. Please try again.");
+    }
+  };
+
+  // Get status badge color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Available":
+        return "bg-green-100 text-green-800";
+      case "Occupied":
+        return "bg-red-100 text-red-800";
+      case "Under Maintenance":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -181,46 +208,69 @@ export default function AdminRoomManagement() {
       {/* Room Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rooms.map((room) => (
-          <Card key={room.id} className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+          <Card key={room.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100">
             <CardContent className="p-0">
-              {room.image ? (
-                <img
-                  src={room.image}
-                  alt={room.name}
-                  className="w-full h-48 object-cover rounded-t-lg"
-                />
-              ) : (
-                <div className="w-full h-48 bg-gray-200 flex items-center justify-center rounded-t-lg">
-                  <Image size={24} className="text-gray-400" />
+              <div className="relative">
+                {room.image ? (
+                  <img
+                    src={room.image}
+                    alt={room.name}
+                    className="w-full h-56 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-56 bg-gray-200 flex items-center justify-center">
+                    <Image size={32} className="text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute top-4 right-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(room.status)}`}>
+                    {room.status}
+                  </span>
                 </div>
-              )}
-              <div className="p-4">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">{room.name}</h2>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>Max Guests: {room.guests}</p>
-                  <p>WiFi: {room.wifi ? "Yes" : "No"}</p>
-                  <p>Bathroom: {room.bathroom ? "Yes" : "No"}</p>
-                  <p className={`font-semibold ${room.status === "Available" ? "text-green-500" : room.status === "Occupied" ? "text-red-500" : "text-yellow-500"}`}>
-                    Status: {room.status}
-                  </p>
-                  <p>Rate Per Day: ₱{room.ratePerDay?.toLocaleString() || "N/A"}</p>
+              </div>
+
+              <div className="p-5">
+                <h2 className="text-xl font-bold text-gray-800 mb-3">{room.name}</h2>
+                
+                {room.description && (
+                  <p className="text-gray-600 text-sm mb-4">{room.description}</p>
+                )}
+                
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Users size={16} className="text-orange-500" />
+                    <span>Max {room.guests} {room.guests === 1 ? 'Guest' : 'Guests'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <DollarSign size={16} className="text-orange-500" />
+                    <span>₱{room.ratePerDay?.toLocaleString() || "0"}/day</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Wifi size={16} className={room.wifi ? "text-orange-500" : "text-gray-400"} />
+                    <span>WiFi {room.wifi ? "Available" : "Not Available"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <ShowerHead size={16} className={room.bathroom ? "text-orange-500" : "text-gray-400"} />
+                    <span>Bathroom {room.bathroom ? "Available" : "Not Available"}</span>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-4">
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => openEditModal(room)}
-                    className="text-orange-600 border-orange-600 hover:bg-purple-50"
+                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
                   >
-                    <Edit size={16} />
+                    <Edit size={16} className="mr-1" /> Edit
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => deleteRoom(room.id)}
-                    className="text-white bg-red-400 hover:bg-red-500"
+                    onClick={() => openDeleteModal(room.id)}
+                    className="text-white bg-red-500 hover:bg-red-600"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={16} className="mr-1" /> Delete
                   </Button>
                 </div>
               </div>
@@ -231,205 +281,300 @@ export default function AdminRoomManagement() {
 
       {/* Add Room Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <AnimatePresence>
-          {isAddModalOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 flex items-center justify-center z-50"
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-800">Add New Room</DialogTitle>
+            <DialogDescription>
+              Fill in the details to add a new room to your inventory.
+            </DialogDescription>
+          </DialogHeader>
+          {/* Scrollable Content */}
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto"> 
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
+              <Input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter room name"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Description</Label>
+              <Input
+                type="text"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Brief description of the room"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
+              <Input
+                type="number"
+                name="guests"
+                value={formData.guests}
+                onChange={handleInputChange}
+                placeholder="Enter max guests"
+                className="w-full"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="wifi"
+                name="wifi"
+                checked={formData.wifi}
+                onChange={handleInputChange}
+              />
+              <Label htmlFor="wifi" className="text-sm font-medium text-gray-700">WiFi Available</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="bathroom"
+                name="bathroom"
+                checked={formData.bathroom}
+                onChange={handleInputChange}
+              />
+              <Label htmlFor="bathroom" className="text-sm font-medium text-gray-700">Bathroom Available</Label>
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Rate Per Day (₱)</Label>
+              <Input
+                type="number"
+                name="ratePerDay"
+                value={formData.ratePerDay}
+                onChange={handleInputChange}
+                placeholder="Enter rate per day"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Status</Label>
+              <Select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="w-full"
+              >
+                <option value="Available">Available</option>
+                <option value="Occupied">Occupied</option>
+                <option value="Under Maintenance">Under Maintenance</option>
+              </Select>
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Room Image</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full"
+              />
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="mt-2 w-full h-40 object-cover rounded-lg"
+                />
+              )}
+            </div>
+          </div>
+          {/* Dialog Footer (Non-scrollable) */}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                setIsAddModalOpen(false);
+              }}
             >
-              <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-auto p-6 z-10 relative">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-semibold text-gray-800">Add New Room</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
-                    <Input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Enter room name"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
-                    <Input
-                      type="number"
-                      name="guests"
-                      value={formData.guests}
-                      onChange={handleInputChange}
-                      placeholder="Enter max guests"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">WiFi</Label>
-                    <Checkbox
-                      name="wifi"
-                      checked={formData.wifi}
-                      onChange={handleInputChange}
-                      className="text-purple-600 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Bathroom</Label>
-                    <Checkbox
-                      name="bathroom"
-                      checked={formData.bathroom}
-                      onChange={handleInputChange}
-                      className="text-purple-600 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Rate Per Day</Label>
-                    <Input
-                      type="number"
-                      name="ratePerDay"
-                      value={formData.ratePerDay}
-                      onChange={handleInputChange}
-                      placeholder="Enter rate per day"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Status</Label>
-                    <Select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="Available">Available</option>
-                      <option value="Occupied">Occupied</option>
-                      <option value="Under Maintenance">Under Maintenance</option>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Room Image</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                    {preview && (
-                      <img
-                        src={preview}
-                        alt="Preview"
-                        className="mt-2 w-full h-32 object-cover rounded-lg"
-                      />
-                    )}
-                  </div>
-                  <Button
-                    onClick={addRoom}
-                    disabled={loading}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    {loading ? "Uploading..." : "Add Room"}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Cancel
+            </Button>
+            <Button
+              onClick={addRoom}
+              disabled={loading}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              {loading ? "Uploading..." : "Add Room"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Edit Room Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <AnimatePresence>
-          {isEditModalOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 flex items-center justify-center z-50"
-            >
-              <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-auto p-6 z-10 relative">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-semibold text-gray-800">Edit Room</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
-                    <Input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Enter room name"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
-                    <Input
-                      type="number"
-                      name="guests"
-                      value={formData.guests}
-                      onChange={handleInputChange}
-                      placeholder="Enter max guests"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">WiFi</Label>
-                    <Checkbox
-                      name="wifi"
-                      checked={formData.wifi}
-                      onChange={handleInputChange}
-                      className="text-purple-600 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Bathroom</Label>
-                    <Checkbox
-                      name="bathroom"
-                      checked={formData.bathroom}
-                      onChange={handleInputChange}
-                      className="text-purple-600 border-gray-300 rounded"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Rate Per Day</Label>
-                    <Input
-                      type="number"
-                      name="ratePerDay"
-                      value={formData.ratePerDay}
-                      onChange={handleInputChange}
-                      placeholder="Enter rate per day"
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700">Status</Label>
-                    <Select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="Available">Available</option>
-                      <option value="Occupied">Occupied</option>
-                      <option value="Under Maintenance"> Under Maintenance</option>
-                    </Select>
-                  </div>
-                  <Button
-                    onClick={editRoom}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    Save Changes
-                  </Button>
-                </div>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-800">Edit Room</DialogTitle>
+            <DialogDescription>
+              Update the details of your room.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Room Name</Label>
+              <Input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter room name"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Description</Label>
+              <Input
+                type="text"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Brief description of the room"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Max Guests</Label>
+              <Input
+                type="number"
+                name="guests"
+                value={formData.guests}
+                onChange={handleInputChange}
+                placeholder="Enter max guests"
+                className="w-full"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="wifi-edit"
+                name="wifi"
+                checked={formData.wifi}
+                onChange={handleInputChange}
+              />
+              <Label htmlFor="wifi-edit" className="text-sm font-medium text-gray-700">WiFi Available</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="bathroom-edit"
+                name="bathroom"
+                checked={formData.bathroom}
+                onChange={handleInputChange}
+              />
+              <Label htmlFor="bathroom-edit" className="text-sm font-medium text-gray-700">Bathroom Available</Label>
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Rate Per Day (₱)</Label>
+              <Input
+                type="number"
+                name="ratePerDay"
+                value={formData.ratePerDay}
+                onChange={handleInputChange}
+                placeholder="Enter rate per day"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">Status</Label>
+              <Select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="w-full"
+              >
+                <option value="Available">Available</option>
+                <option value="Occupied">Occupied</option>
+                <option value="Under Maintenance">Under Maintenance</option>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetForm();
+                  setIsEditModalOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={editRoom}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex flex-col items-center space-y-4">
+              {/* Icon for Delete Confirmation */}
+              <div className="p-3 bg-red-100 rounded-full">
+                <Trash2 className="w-8 h-8 text-red-600" />
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <DialogTitle className="text-xl font-semibold text-gray-800 text-center">
+                Confirm Deletion
+              </DialogTitle>
+              <DialogDescription className="text-center text-gray-600">
+                Are you sure you want to delete this room? This action cannot be undone.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setRoomToDelete(null);
+              }}
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteRoom}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Delete Room
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+     {/* Confirmation Modal */}
+      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex flex-col items-center space-y-4">
+              {/* Icon for Success Confirmation */}
+              <div className="p-3 bg-green-100 rounded-full">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <DialogTitle className="text-xl font-semibold text-gray-800 text-center">
+                Success
+              </DialogTitle>
+              <DialogDescription className="text-center text-gray-600">
+                Your action was successful.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              onClick={() => setIsConfirmModalOpen(false)}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
       </Dialog>
     </div>
   );
