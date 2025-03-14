@@ -5,7 +5,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 
-
 function BookingForm() {
   const { state } = useLocation();
   const selectedRoom = state?.selectedRoom;
@@ -18,7 +17,7 @@ function BookingForm() {
   const [roomChoice, setRoomChoice] = useState(selectedRoom?.name || "");
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [bookedDates, setBookedDates] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [guestInfo, setGuestInfo] = useState({
     firstName: "",
@@ -29,38 +28,36 @@ function BookingForm() {
     specialRequest: "None",
   });
 
-  // Fetch booked dates for the selected room
   const fetchBookedDates = async () => {
     if (!selectedRoom?.name) return;
 
-    const bookingsRef = collection(db, "bookings");
-    const q = query(bookingsRef, where("selectedRoom", "==", selectedRoom.name));
-    const querySnapshot = await getDocs(q);
+    try {
+      const bookingsRef = collection(db, "bookings");
+      const q = query(bookingsRef, where("selectedRoom", "==", selectedRoom.name));
+      const querySnapshot = await getDocs(q);
 
-    const dates = [];
-    querySnapshot.forEach((doc) => {
-      const booking = doc.data();
-      const checkIn = new Date(booking.checkInDate);
-      const checkOut = new Date(booking.checkOutDate);
+      const dates = [];
+      querySnapshot.forEach((doc) => {
+        const booking = doc.data();
+        const checkIn = new Date(booking.checkInDate);
+        const checkOut = new Date(booking.checkOutDate);
 
-      for (let date = checkIn; date <= checkOut; date.setDate(date.getDate() + 1)) {
-        dates.push(new Date(date));
-      }
-    });
-
-    setBookedDates(dates);
+        for (let date = checkIn; date <= checkOut; date.setDate(date.getDate() + 1)) {
+          dates.push(new Date(date));
+        }
+      });
+      setBookedDates(dates);
+    } catch (error) {
+      console.error("Error fetching booked dates:", error);
+    }
   };
 
   useEffect(() => {
     fetchBookedDates();
   }, [selectedRoom]);
 
-  // Check if a date is booked
-  const isDateBooked = (date) => {
-    return bookedDates.some(
-      (bookedDate) => date.toDateString() === bookedDate.toDateString()
-    );
-  };
+  const isDateBooked = (date) =>
+    bookedDates.some((bookedDate) => date.toDateString() === bookedDate.toDateString());
 
   const calculateNights = (checkIn, checkOut) => {
     if (checkIn && checkOut) {
@@ -74,53 +71,34 @@ function BookingForm() {
   const handleDateChange = (type, date) => {
     if (type === "checkIn") {
       setCheckInDate(date);
+      setNumberOfNights(calculateNights(date, checkOutDate));
     } else {
       setCheckOutDate(date);
+      setNumberOfNights(calculateNights(checkInDate, date));
     }
-    setNumberOfNights(
-      calculateNights(
-        type === "checkIn" ? date : checkInDate,
-        type === "checkOut" ? date : checkOutDate
-      )
-    );
   };
 
   const handleGuestInfoChange = (e) => {
     const { name, value } = e.target;
-    setGuestInfo((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setGuestInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleNext = () => {
-    if (step === 1 && numberOfNights > 0 && roomChoice) {
-      setStep(2);
-    } else if (step === 2) {
-      setStep(3);
-    }
+    if (step === 1 && numberOfNights > 0 && roomChoice) setStep(2);
+    else if (step === 2) setStep(3);
   };
 
   const handlePrevious = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
+    if (step > 1) setStep(step - 1);
   };
 
   const handleConfirmBooking = () => {
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
   const handleModalConfirm = async () => {
-    setIsModalOpen(false); // Close the modal
-
-    if (
-      guestInfo.firstName &&
-      guestInfo.lastName &&
-      guestInfo.email &&
-      guestInfo.gender &&
-      guestInfo.mobileNumber
-    ) {
+    setIsModalOpen(false);
+    if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.mobileNumber) {
       try {
         const bookingData = {
           selectedRoom: selectedRoom?.name,
@@ -135,16 +113,13 @@ function BookingForm() {
           timestamp: new Date(),
         };
 
-        // Save booking data to Firestore
         const bookingsRef = collection(db, "bookings");
         await addDoc(bookingsRef, bookingData);
 
         // Send booking confirmation email
-        const emailResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/send-booking-confirmation`, {
+        const emailResponse = await fetch(`http://localhost:3000/send-booking-confirmation`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: guestInfo.email,
             firstName: guestInfo.firstName,
@@ -156,13 +131,13 @@ function BookingForm() {
           }),
         });
 
-        if (emailResponse.ok) {
-          console.log("Booking confirmation email sent successfully");
+        if (!emailResponse.ok) {
+          console.error("Failed to send email");
         } else {
-          console.error("Failed to send booking confirmation email");
+          console.log("Booking confirmation email sent successfully");
         }
 
-        navigate("/"); // Navigate to the home page after successful booking
+        navigate("/home");
       } catch (error) {
         console.error("Error:", error);
       }
@@ -170,42 +145,23 @@ function BookingForm() {
   };
 
   const handleModalClose = () => {
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
   };
 
   const totalCost = selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0;
 
-  const ConfirmationModal = ({ isOpen, onConfirm }) => {
-    const navigate = useNavigate(); // Initialize useNavigate
-  
-    const handleConfirm = () => {
-      onConfirm(); // Call the onConfirm function passed from the parent
-      navigate("/"); // Redirect to the home page
-    };
-  
-    if (!isOpen) return null;
-  
+  if (!selectedRoom) {
+    return <div>No room selected. Please select a room first.</div>;
+  }
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen flex flex-col items-center">
       {/* Progress Indicator */}
       <div className="w-full max-w-4xl mb-8">
         <div className="flex justify-between items-center">
-          <div
-            className={`flex-1 h-2 ${
-              step >= 1 ? "bg-orange-500" : "bg-gray-300"
-            }`}
-          ></div>
-          <div
-            className={`flex-1 h-2 mx-2 ${
-              step >= 2 ? "bg-orange-500" : "bg-gray-300"
-            }`}
-          ></div>
-          <div
-            className={`flex-1 h-2 ${
-              step >= 3 ? "bg-orange-500" : "bg-gray-300"
-            }`}
-          ></div>
+          <div className={`flex-1 h-2 ${step >= 1 ? "bg-orange-500" : "bg-gray-300"}`}></div>
+          <div className={`flex-1 h-2 mx-2 ${step >= 2 ? "bg-orange-500" : "bg-gray-300"}`}></div>
+          <div className={`flex-1 h-2 ${step >= 3 ? "bg-orange-500" : "bg-gray-300"}`}></div>
         </div>
         <div className="flex justify-between mt-2 text-sm font-medium">
           <span>Step 1: Room & Dates</span>
@@ -265,9 +221,7 @@ function BookingForm() {
           <div className="mt-6">
             <label className="block text-lg font-medium mb-2">Total Cost</label>
             <div className="p-4 border border-gray-300 rounded-lg">
-              <p className="text-lg font-semibold">
-                ₱{(selectedRoom?.ratePerDay * numberOfNights)?.toLocaleString()}
-              </p>
+              <p className="text-lg font-semibold">₱{totalCost.toLocaleString()}</p>
               <p className="text-gray-600">
                 {numberOfNights} night(s) × ₱{selectedRoom?.ratePerDay?.toLocaleString()}
               </p>
@@ -389,30 +343,51 @@ function BookingForm() {
         <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-lg">
           <h2 className="text-3xl font-bold mb-6 text-gray-800">Step 3: Confirm Booking</h2>
           <div className="space-y-8">
-            {/* Booking Summary */}
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-gray-800">Booking Summary</h3>
               <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
                 <p className="text-lg font-semibold text-gray-900">{selectedRoom?.name}</p>
-                <p className="text-gray-700"><span className="font-medium">Rate per Day:</span> ₱{selectedRoom?.ratePerDay?.toLocaleString()}</p>
-                <p className="text-gray-700"><span className="font-medium">Check-in:</span> {checkInDate?.toDateString()}</p>
-                <p className="text-gray-700"><span className="font-medium">Check-out:</span> {checkOutDate?.toDateString()}</p>
-                <p className="text-gray-700"><span className="font-medium">Number of Nights:</span> {numberOfNights}</p>
-                <p className="text-gray-700"><span className="font-medium">Number of Guests:</span> {numberOfGuests}</p>
-                <p className="text-gray-900 font-semibold text-lg"><span className="font-medium">Total Cost:</span> ₱{totalCost.toLocaleString()}</p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Rate per Day:</span> ₱{selectedRoom?.ratePerDay?.toLocaleString()}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Check-in:</span> {checkInDate?.toDateString()}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Check-out:</span> {checkOutDate?.toDateString()}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Number of Nights:</span> {numberOfNights}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Number of Guests:</span> {numberOfGuests}
+                </p>
+                <p className="text-gray-900 font-semibold text-lg">
+                  <span className="font-medium">Total Cost:</span> ₱{totalCost.toLocaleString()}
+                </p>
               </div>
             </div>
-
-            {/* Guest Information */}
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-gray-800">Guest Information</h3>
               <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
-                <p className="text-gray-700"><span className="font-medium">First Name:</span> {guestInfo.firstName}</p>
-                <p className="text-gray-700"><span className="font-medium">Last Name:</span> {guestInfo.lastName}</p>
-                <p className="text-gray-700"><span className="font-medium">Email:</span> {guestInfo.email}</p>
-                <p className="text-gray-700"><span className="font-medium">Mobile Number:</span> {guestInfo.mobileNumber}</p>
-                <p className="text-gray-700"><span className="font-medium">Gender:</span> {guestInfo.gender}</p>
-                <p className="text-gray-700"><span className="font-medium">Special Request:</span> {guestInfo.specialRequest || "None"}</p>
+                <p className="text-gray-700">
+                  <span className="font-medium">First Name:</span> {guestInfo.firstName}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Last Name:</span> {guestInfo.lastName}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Email:</span> {guestInfo.email}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Mobile Number:</span> {guestInfo.mobileNumber}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Gender:</span> {guestInfo.gender}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Special Request:</span> {guestInfo.specialRequest || "None"}
+                </p>
               </div>
             </div>
           </div>
@@ -436,21 +411,29 @@ function BookingForm() {
       )}
 
       {/* Confirmation Modal */}
-      <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full mx-4">
-        <h2 className="text-2xl font-bold mb-4">Booking Confirmed!!</h2>
-        <div className="flex justify-end space-x-4">
-          <button
-            onClick={handleConfirm} 
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-200"
-          >
-            Confirm
-          </button>
+      {isModalOpen && (
+        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold mb-4">Booking Confirmed!!</h2>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleModalConfirm}
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-200"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={handleModalClose}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
     </div>
   );
-  }
-};
+}
+
 export default BookingForm;

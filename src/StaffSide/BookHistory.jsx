@@ -282,13 +282,18 @@ const BookHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan="7" className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-                </td>
-              </tr>
-            ) : currentBookings.length === 0 ? (
+          {isLoading ? (
+          <tr>
+            <td colSpan="9" className="text-center p-16">
+              <div className="flex justify-center items-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+                <p className="text-gray-600 font-medium ml-3 animate-bounce">
+                Loading...
+              </p>
+              </div>
+            </td>
+          </tr>
+        ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="9" className="p-6 text-center text-gray-600">
                   No booking history found.
@@ -422,7 +427,7 @@ const BookHistory = () => {
 
       {/* Confirmation Modal for Deletion */}
       {isConfirmModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg w-full max-w-md shadow-lg">
             <h2 className="text-2xl font-bold mb-4 text-gray-800">Confirm Deletion</h2>
             <p className="mb-6 text-gray-700">

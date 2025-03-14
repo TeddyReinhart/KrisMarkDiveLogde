@@ -21,7 +21,7 @@ const BookRooms = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5); // Number of items per page
+  const [itemsPerPage] = useState(10); // Number of items per page
 
   // Fetch bookings from Firestore
   const fetchBookings = async () => {
@@ -110,17 +110,17 @@ const BookRooms = () => {
   // Handle payment form submission
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       // Fetch the booking data
       const bookingRef = doc(db, "bookings", selectedBooking);
       const bookingSnapshot = await getDoc(bookingRef);
       const bookingData = bookingSnapshot.data();
-  
+
       // Calculate billing details
       const daysStayed = calculateDaysStayed(bookingData.checkInDate, bookingData.checkOutDate);
       const totalAmount = calculateTotalAmount(bookingData.roomDetails?.ratePerDay || 0, daysStayed);
-  
+
       // Add the booking data to the bookingHistory collection with payment details
       await addDoc(collection(db, "bookingHistory"), {
         ...bookingData,
@@ -131,13 +131,10 @@ const BookRooms = () => {
           totalAmount,
         },
       });
-  
+
       // Delete the booking from the bookings collection
       await deleteDoc(bookingRef);
-  
-      // Send check-out confirmation email
-      await sendCheckoutConfirmationEmail(bookingData, paymentDetails, totalAmount);
-  
+
       // Show confirmation modal
       setIsConfirmationModalOpen(true);
       setIsPaymentModalOpen(false); // Close payment modal
@@ -147,10 +144,11 @@ const BookRooms = () => {
         paymentMethod: "cash",
         gcashNumber: "",
       }); // Reset payment details
-  
+
       fetchBookings(); // Refresh the list of bookings
     } catch (error) {
       console.error("Error during check-out and payment: ", error);
+      alert("Failed to complete check-out and payment. Please try again.");
     }
   };
 
@@ -180,39 +178,8 @@ const BookRooms = () => {
   // Calculate total pages
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
 
-  const sendCheckoutConfirmationEmail = async (bookingData, paymentDetails, totalAmount) => {
-  const emailData = {
-    email: bookingData.guestInfo.email,
-    firstName: bookingData.guestInfo.firstName,
-    lastName: bookingData.guestInfo.lastName,
-    selectedRoom: bookingData.roomDetails?.name,
-    checkInDate: bookingData.checkInDate,
-    checkOutDate: bookingData.checkOutDate,
-    totalCost: totalAmount,
-    paymentMethod: paymentDetails.paymentMethod,
-  };
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/send-checkout-confirmation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(emailData),
-    });
-
-    if (response.ok) {
-      console.log("Check-out confirmation email sent successfully");
-    } else {
-      console.error("Failed to send check-out confirmation email");
-    }
-  } catch (error) {
-    console.error("Error sending check-out confirmation email: ", error);
-  }
-};
-
   return (
-    <div className="p-6 bg-gray-50 h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Manage Bookings</h1>
 
       {/* Filter and Search Bar */}
@@ -240,7 +207,7 @@ const BookRooms = () => {
 
       {/* Bookings Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
-        <table className="w-full">
+        <table className="min-w-full">
           <thead className="bg-orange-500">
             <tr>
               <th className="p-4 text-left text-gray-700 font-bold">Room</th>
@@ -252,15 +219,19 @@ const BookRooms = () => {
               <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
             </tr>
           </thead>
-        
         <tbody>
-          {isLoading ? (
-           
-              <td colSpan="7" className="h-64 w-[100%] flex items-center justify-center absolute">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500 "></div>
-              </td>
-          
-          ) : currentBookings.length === 0 ? (
+        {isLoading ? (
+        <tr>
+          <td colSpan="5" className="text-center p-16">
+            <div className="flex justify-end items-center pr-55">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+              <p className="text-gray-600 font-medium ml-3 animate-bounce">
+                Loading...
+              </p>
+            </div>
+          </td>
+        </tr>
+      ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="7" className="p-6 text-center text-gray-600">
                   No bookings found.
@@ -482,23 +453,21 @@ const BookRooms = () => {
 
       {/* Confirmation Modal */}
       {isConfirmationModalOpen && (
-  <div className="fixed inset-0 bg-opacity-75 flex justify-center items-center z-50 shadow-lg">
-    <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
-      <h3 className="text-lg font-semibold">Payment Confirmed!</h3>
-      <p className="text-gray-600 my-4">
-        The payment has been successfully processed. A confirmation email has been sent to the guest.
-      </p>
-      <div className="flex justify-end">
-        <button
-          onClick={() => setIsConfirmationModalOpen(false)}
-          className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
-        >
-          OK
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50 shadow-lg">
+          <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
+            <h3 className="text-lg font-semibold">Payment Confirmed!</h3>
+            <p className="text-gray-600 my-4">The payment has been successfully processed.</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsConfirmationModalOpen(false)}
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

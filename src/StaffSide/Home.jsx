@@ -113,15 +113,15 @@ function Home() {
         </div>
 
         {/* Right Column (Calendar & Booking Details) */}
-        <div className="col-span-5 space-y-6 ">
+        <div className="col-span-5 space-y-6">
           {/* Calendar Section */}
-          <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-300 ">
-            <CalendarComponent
-              date={date}
-              setDate={setDate}
-              bookedDates={bookedDates} // Pass booked dates to CalendarComponent
-            />
-          </div>
+          <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-300 w-full h-[400px]">
+          <CalendarComponent
+            date={date}
+            setDate={setDate}
+            bookedDates={bookedDates}
+          />
+        </div>
 
           {/* Selected Room Section */}
           {selectedRoom ? (

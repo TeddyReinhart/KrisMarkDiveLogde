@@ -13,12 +13,14 @@ import { db } from "../Firebase/Firebase"; // Adjust the path to your firebase.j
 
 function RoomAvailability() {
   const [roomsState, setRoomsState] = useState([]); // State to store rooms
+  const [isLoading, setIsLoading] = useState(true); // State to track loading status
   const navigate = useNavigate();
 
   // Fetch rooms from Firestore
   useEffect(() => {
     const fetchRooms = async () => {
       try {
+        setIsLoading(true); // Set loading to true before fetching data
         const roomsCollection = collection(db, "rooms"); // Replace "rooms" with your Firestore collection name
         const roomsSnapshot = await getDocs(roomsCollection);
         const roomsData = roomsSnapshot.docs.map((doc) => ({
@@ -28,6 +30,8 @@ function RoomAvailability() {
         setRoomsState(roomsData); // Update state with fetched rooms
       } catch (error) {
         console.error("Error fetching rooms: ", error);
+      } finally {
+        setIsLoading(false); // Set loading to false after fetching data
       }
     };
 
@@ -74,24 +78,74 @@ function RoomAvailability() {
         </div>
       </div>
 
+      {/* Loader with animated text */}
+      {isLoading && (
+        <div className="flex flex-col justify-center items-center mb-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-orange-500"></div>
+          <p className="text-gray-600 font-medium mt-2 animate-bounce">
+            Loading...
+          </p>
+        </div>
+      )}
+
       {/* Rooms Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {roomsState.map((room, index) => (
-          <div
-            key={index}
-            className={`bg-white p-6 rounded-xl shadow-lg border border-gray-200 cursor-pointer`}
-            onClick={() => handleRoomClick(room)} // Redirect to BookingForm.jsx on click
-          >
-            {/* Image and Status Badge Container */}
-            <div className="relative">
-              <img
-                src={room.image}
-                alt={room.name}
-                className="rounded-lg w-full h-52 object-cover mb-4"
-              />
-              {/* Availability Status Badge */}
-              <div
-                className={`absolute top-2 right-2 px-3 py-1 rounded-lg text-sm font-semibold ${
+      {!isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {roomsState.map((room, index) => (
+            <div
+              key={index}
+              className={`bg-white p-6 rounded-xl shadow-lg border border-gray-200 cursor-pointer`}
+              onClick={() => handleRoomClick(room)} // Redirect to BookingForm.jsx on click
+            >
+              {/* Image and Status Badge Container */}
+              <div className="relative">
+                <img
+                  src={room.image}
+                  alt={room.name}
+                  className="rounded-lg w-full h-52 object-cover mb-4"
+                />
+                {/* Availability Status Badge */}
+                <div
+                  className={`absolute top-2 right-2 px-3 py-1 rounded-lg text-sm font-semibold ${
+                    room.status === "Available"
+                      ? "bg-green-100 text-green-600"
+                      : room.status === "Unavailable"
+                      ? "bg-red-100 text-red-600"
+                      : room.status === "Limited Availability"
+                      ? "bg-yellow-100 text-yellow-600"
+                      : room.status === "Occupied"
+                      ? "bg-blue-100 text-blue-600"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {room.status}
+                </div>
+              </div>
+
+              {/* Room Details */}
+              <h3 className="text-xl font-bold">{room.name}</h3>
+              <p className="text-gray-500 flex items-center gap-2 mt-1">
+                <FaUserFriends /> Max guests: {room.guests}
+              </p>
+              <p className="text-gray-500 flex items-center gap-2 mt-1">
+                <FaBath /> Own Bathroom
+              </p>
+              <p className="text-gray-500 flex items-center gap-2 mt-1">
+                <FaSnowflake /> Airconditioned
+              </p>
+              <p className="text-gray-500 flex items-center gap-2 mt-1">
+                <FaWifi /> Free Wifi
+              </p>
+              <p className="text-gray-500 flex items-center gap-2 mt-1">
+                <FaMoneyBillAlt /> Rate per Day: ₱{room.ratePerDay?.toLocaleString() || "N/A"}
+              </p>
+
+              {/* Availability Status Toggle Button */}
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2"> Availability Status</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                <button
+                className={`px-3 py-1 rounded-lg text-center ${
                   room.status === "Available"
                     ? "bg-green-100 text-green-600"
                     : room.status === "Unavailable"
@@ -102,57 +156,19 @@ function RoomAvailability() {
                     ? "bg-blue-100 text-blue-600"
                     : "bg-gray-200 text-gray-600"
                 }`}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent the room click event from firing
+                  toggleAvailability(room.id, room.status); // Toggle the status
+                }}
               >
-                {room.status}
+                {room.status} 
+              </button>
+                </div>
               </div>
             </div>
-
-            {/* Room Details */}
-            <h3 className="text-xl font-bold">{room.name}</h3>
-            <p className="text-gray-500 flex items-center gap-2 mt-1">
-              <FaUserFriends /> Max guests: {room.guests}
-            </p>
-            <p className="text-gray-500 flex items-center gap-2 mt-1">
-              <FaBath /> Own Bathroom
-            </p>
-            <p className="text-gray-500 flex items-center gap-2 mt-1">
-              <FaSnowflake /> Airconditioned
-            </p>
-            <p className="text-gray-500 flex items-center gap-2 mt-1">
-              <FaWifi /> Free Wifi
-            </p>
-            <p className="text-gray-500 flex items-center gap-2 mt-1">
-              <FaMoneyBillAlt /> Rate per Day: ₱{room.ratePerDay?.toLocaleString() || "N/A"}
-            </p>
-
-            {/* Availability Status Toggle Button */}
-            <div className="mt-4">
-              <h4 className="font-semibold mb-2"> Availability Status</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-              <button
-              className={`px-3 py-1 rounded-lg text-center ${
-                room.status === "Available"
-                  ? "bg-green-100 text-green-600"
-                  : room.status === "Unavailable"
-                  ? "bg-red-100 text-red-600"
-                  : room.status === "Limited Availability"
-                  ? "bg-yellow-100 text-yellow-600"
-                  : room.status === "Occupied"
-                  ? "bg-blue-100 text-blue-600"
-                  : "bg-gray-200 text-gray-600"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent the room click event from firing
-                toggleAvailability(room.id, room.status); // Toggle the status
-              }}
-            >
-              {room.status} 
-            </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
