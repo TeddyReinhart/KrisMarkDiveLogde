@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
+import { FaCalendarAlt, FaUsers, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes, FaInfoCircle } from "react-icons/fa";
 
 function BookingForm() {
   const { state } = useLocation();
@@ -155,44 +156,59 @@ function BookingForm() {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen flex flex-col items-center">
-      {/* Progress Indicator */}
-      <div className="w-full max-w-4xl mb-8">
-        <div className="flex justify-between items-center">
-          <div className={`flex-1 h-2 ${step >= 1 ? "bg-orange-500" : "bg-gray-300"}`}></div>
-          <div className={`flex-1 h-2 mx-2 ${step >= 2 ? "bg-orange-500" : "bg-gray-300"}`}></div>
-          <div className={`flex-1 h-2 ${step >= 3 ? "bg-orange-500" : "bg-gray-300"}`}></div>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex justify-between mb-2">
+          {[1, 2, 3].map((stepNum) => (
+            <div key={stepNum} className="text-center w-1/3">
+              <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center ${step >= stepNum ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                {stepNum}
+              </div>
+              <div className={`mt-1 text-sm ${step >= stepNum ? 'text-orange-500 font-medium' : 'text-gray-500'}`}>
+                {stepNum === 1 ? 'Room & Dates' : stepNum === 2 ? 'Guest Info' : 'Confirmation'}
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="flex justify-between mt-2 text-sm font-medium">
-          <span>Step 1: Room & Dates</span>
-          <span>Step 2: Guest Info</span>
-          <span>Step 3: Confirmation</span>
+        <div className="relative pt-2">
+          <div className="flex mb-2 items-center justify-between">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-orange-500 h-2 rounded-full" style={{ width: `${(step - 1) * 50}%` }}></div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Step 1: Room and Dates Selection */}
       {step === 1 && (
-        <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-6">Step 1: Select Room & Dates</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-lg font-medium mb-2">Check-in Date</label>
+        <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Select Room & Dates</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="space-y-2">
+              <label className="flex items-center text-gray-700 font-medium mb-1">
+                <FaCalendarAlt className="mr-2 text-orange-500" />
+                Check-in Date
+              </label>
               <DatePicker
                 selected={checkInDate}
                 onChange={(date) => handleDateChange("checkIn", date)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholderText="Select check-in date"
                 dateFormat="MMMM d, yyyy"
                 minDate={new Date()}
                 filterDate={(date) => !isDateBooked(date)}
               />
             </div>
-            <div>
-              <label className="block text-lg font-medium mb-2">Check-out Date</label>
+            <div className="space-y-2">
+              <label className="flex items-center text-gray-700 font-medium mb-1">
+                <FaCalendarAlt className="mr-2 text-orange-500" />
+                Check-out Date
+              </label>
               <DatePicker
                 selected={checkOutDate}
                 onChange={(date) => handleDateChange("checkOut", date)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
+                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 placeholderText="Select check-out date"
                 dateFormat="MMMM d, yyyy"
                 minDate={checkInDate || new Date()}
@@ -200,40 +216,45 @@ function BookingForm() {
               />
             </div>
           </div>
-          <div className="mt-6">
-            <label className="block text-lg font-medium mb-2">Number of Guests</label>
-            <input
-              type="number"
+          <div className="mb-6">
+            <label className="flex items-center text-gray-700 font-medium mb-1">
+              <FaUsers className="mr-2 text-orange-500" />
+              Number of Guests
+            </label>
+            <select
+              name="guests"
               value={numberOfGuests}
               onChange={(e) => setNumberOfGuests(e.target.value)}
-              min="1"
-              className="w-full p-3 border border-gray-300 rounded-lg"
-              required
-            />
-          </div>
-          <div className="mt-6">
-            <label className="block text-lg font-medium mb-2">Selected Room</label>
-            <div className="p-4 border border-gray-300 rounded-lg">
-              <p className="text-lg font-semibold">{selectedRoom?.name}</p>
-              <p className="text-gray-600">Rate per Day: ₱{selectedRoom?.ratePerDay?.toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="mt-6">
-            <label className="block text-lg font-medium mb-2">Total Cost</label>
-            <div className="p-4 border border-gray-300 rounded-lg">
-              <p className="text-lg font-semibold">₱{totalCost.toLocaleString()}</p>
-              <p className="text-gray-600">
-                {numberOfNights} night(s) × ₱{selectedRoom?.ratePerDay?.toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 flex justify-end">
-            <button
-              className="bg-orange-500 text-white px-6 py-3 rounded-lg text-lg font-semibold"
-              onClick={handleNext}
-              disabled={numberOfNights <= 0 || !roomChoice}
+              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             >
-              Next
+              {[1, 2, 3, 4, 5, 6].map(num => (
+                <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+              ))}
+            </select>
+          </div>
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900">Booking Summary</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+              <div className="text-gray-600">Selected Room:</div>
+              <div className="font-medium">{selectedRoom?.name}</div>
+              <div className="text-gray-600">Rate per Night:</div>
+              <div className="font-medium">₱{selectedRoom?.ratePerDay}</div>
+              <div className="text-gray-600">Number of Nights:</div>
+              <div className="font-medium">{numberOfNights}</div>
+            </div>
+            <div className="border-t border-blue-200 pt-3 flex justify-between items-center">
+              <span className="font-semibold text-blue-900">Total Cost:</span>
+              <span className="font-bold text-xl text-orange-600">₱{totalCost}</span>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleNext}
+              disabled={!checkInDate || !checkOutDate || numberOfNights === 0}
+              className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Continue to Guest Information
+              <FaArrowRight className="ml-2" />
             </button>
           </div>
         </div>
@@ -241,170 +262,177 @@ function BookingForm() {
 
       {/* Step 2: Guest Information */}
       {step === 2 && (
-        <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-6">Step 2: Guest Information</h2>
-          <form>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-lg font-medium mb-2">First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={guestInfo.firstName}
-                  onChange={handleGuestInfoChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  placeholder="First Name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-lg font-medium mb-2">Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={guestInfo.lastName}
-                  onChange={handleGuestInfoChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  placeholder="Last Name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-lg font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={guestInfo.email}
-                  onChange={handleGuestInfoChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  placeholder="Email"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-lg font-medium mb-2">Mobile Number</label>
-                <input
-                  type="tel"
-                  maxLength={11}
-                  name="mobileNumber"
-                  value={guestInfo.mobileNumber}
-                  onChange={handleGuestInfoChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  placeholder="Mobile Number"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-lg font-medium mb-2">Gender</label>
-                <select
-                  name="gender"
-                  value={guestInfo.gender}
-                  onChange={handleGuestInfoChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  required
-                >
-                  <option value="Female">Female</option>
-                  <option value="Male">Male</option>
-                </select>
-              </div>
-              <div className="col-span-2">
-                <label className="block text-lg font-medium mb-2">Special Request</label>
-                <textarea
-                  name="specialRequest"
-                  value={guestInfo.specialRequest}
-                  onChange={handleGuestInfoChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  placeholder="Special Request"
-                />
-              </div>
+        <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Guest Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="space-y-2">
+              <label className="block text-gray-700 font-medium mb-1">First Name</label>
+              <input
+                type="text"
+                name="firstName"
+                value={guestInfo.firstName}
+                onChange={handleGuestInfoChange}
+                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                required
+              />
             </div>
-            <div className="mt-6 flex justify-between">
-              <button
-                type="button"
-                className="bg-gray-500 text-white px-6 py-3 rounded-lg text-lg font-semibold"
-                onClick={handlePrevious}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="bg-orange-500 text-white px-6 py-3 rounded-lg text-lg font-semibold"
-                onClick={handleNext}
-              >
-                Next
-              </button>
+            <div className="space-y-2">
+              <label className="block text-gray-700 font-medium mb-1">Last Name</label>
+              <input
+                type="text"
+                name="lastName"
+                value={guestInfo.lastName}
+                onChange={handleGuestInfoChange}
+                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                required
+              />
             </div>
-          </form>
+            <div className="space-y-2">
+              <label className="block text-gray-700 font-medium mb-1">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                value={guestInfo.email}
+                onChange={handleGuestInfoChange}
+                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-gray-700 font-medium mb-1">Phone Number</label>
+              <input
+                type="tel"
+                name="mobileNumber"
+                value={guestInfo.mobileNumber}
+                onChange={handleGuestInfoChange}
+                className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-6">
+            <label className="block text-gray-700 font-medium mb-1">Special Requests</label>
+            <textarea
+              name="specialRequest"
+              value={guestInfo.specialRequest}
+              onChange={handleGuestInfoChange}
+              rows="3"
+              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              placeholder="Any special requirements or requests for your stay..."
+            ></textarea>
+          </div>
+          <div className="flex justify-between">
+            <button
+              onClick={handlePrevious}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
+            >
+              <FaArrowLeft className="mr-2" />
+              Back
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.mobileNumber}
+              className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Review Booking
+              <FaArrowRight className="ml-2" />
+            </button>
+          </div>
         </div>
       )}
 
       {/* Step 3: Confirmation */}
       {step === 3 && (
-        <div className="w-full max-w-4xl bg-white p-8 rounded-lg shadow-lg">
-          <h2 className="text-3xl font-bold mb-6 text-gray-800">Step 3: Confirm Booking</h2>
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-2xl font-semibold mb-4 text-gray-800">Booking Summary</h3>
-              <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
-                <p className="text-lg font-semibold text-gray-900">{selectedRoom?.name}</p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Rate per Day:</span> ₱{selectedRoom?.ratePerDay?.toLocaleString()}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Check-in:</span> {checkInDate?.toDateString()}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Check-out:</span> {checkOutDate?.toDateString()}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Number of Nights:</span> {numberOfNights}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Number of Guests:</span> {numberOfGuests}
-                </p>
-                <p className="text-gray-900 font-semibold text-lg">
-                  <span className="font-medium">Total Cost:</span> ₱{totalCost.toLocaleString()}
-                </p>
+        <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
+          <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Review & Confirm Your Booking</h2>
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-blue-900">Booking Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 mb-4">
+              <div>
+                <p className="text-gray-500 text-sm">Check-in Date</p>
+                <p className="font-medium">{checkInDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Check-out Date</p>
+                <p className="font-medium">{checkOutDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Room Type</p>
+                <p className="font-medium">{selectedRoom?.name}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Guests</p>
+                <p className="font-medium">{numberOfGuests} {numberOfGuests === 1 ? 'Guest' : 'Guests'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Length of Stay</p>
+                <p className="font-medium">{numberOfNights} {numberOfNights === 1 ? 'Night' : 'Nights'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Payment Method</p>
+                <p className="font-medium">Pay at Property</p>
               </div>
             </div>
-            <div>
-              <h3 className="text-2xl font-semibold mb-4 text-gray-800">Guest Information</h3>
-              <div className="p-5 border border-gray-300 rounded-lg bg-gray-50">
-                <p className="text-gray-700">
-                  <span className="font-medium">First Name:</span> {guestInfo.firstName}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Last Name:</span> {guestInfo.lastName}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Email:</span> {guestInfo.email}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Mobile Number:</span> {guestInfo.mobileNumber}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Gender:</span> {guestInfo.gender}
-                </p>
-                <p className="text-gray-700">
-                  <span className="font-medium">Special Request:</span> {guestInfo.specialRequest || "None"}
-                </p>
+            <div className="border-t border-blue-200 pt-4 mt-4">
+              <h4 className="font-medium mb-2">Rate Summary</h4>
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-600">{selectedRoom?.name} ({numberOfNights} {numberOfNights === 1 ? 'night' : 'nights'} × ₱{selectedRoom?.ratePerDay})</span>
+                <span>₱{totalCost}</span>
+              </div>
+              <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between font-bold">
+                <span>Total Amount</span>
+                <span className="text-xl text-orange-600">₱{totalCost}</span>
               </div>
             </div>
           </div>
-          <div className="mt-8 flex justify-between">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-blue-900">Guest Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
+              <div>
+                <p className="text-gray-500 text-sm">Guest Name</p>
+                <p className="font-medium">{guestInfo.firstName} {guestInfo.lastName}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Email Address</p>
+                <p className="font-medium">{guestInfo.email}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Phone Number</p>
+                <p className="font-medium">{guestInfo.mobileNumber}</p>
+              </div>
+              {guestInfo.specialRequest && (
+                <div className="md:col-span-2">
+                  <p className="text-gray-500 text-sm">Special Requests</p>
+                  <p className="font-medium">{guestInfo.specialRequest}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mb-6">
+            <label className="flex items-start cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 rounded"
+              />
+              <span className="ml-2 text-gray-700 text-sm">
+                I agree to the <a href="#" onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }} className="text-orange-500 hover:underline">terms and conditions</a>, and I confirm that the information provided is correct.
+              </span>
+            </label>
+          </div>
+          <div className="flex justify-between">
             <button
-              type="button"
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition duration-200"
               onClick={handlePrevious}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
             >
-              Previous
+              <FaArrowLeft className="mr-2" />
+              Back
             </button>
             <button
-              type="button"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition duration-200"
               onClick={handleConfirmBooking}
+              className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
             >
               Confirm Booking
+              <FaCheckCircle className="ml-2" />
             </button>
           </div>
         </div>
@@ -412,21 +440,41 @@ function BookingForm() {
 
       {/* Confirmation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4">Booking Confirmed!!</h2>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={handleModalConfirm}
-                className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-200"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-blue-900">Confirm Booking</h3>
+              <button 
+                onClick={handleModalClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                Confirm
+                <FaTimes />
               </button>
+            </div>
+            <div className="mb-4">
+              <p className="mb-4">Are you sure you want to confirm your booking for:</p>
+              <div className="bg-gray-50 p-3 rounded-lg mb-3">
+                <p className="font-medium">{selectedRoom?.name}</p>
+                <p className="text-sm text-gray-600">
+                  {checkInDate?.toLocaleDateString()} to {checkOutDate?.toLocaleDateString()}
+                </p>
+                <p className="text-sm text-gray-600">{numberOfNights} {numberOfNights === 1 ? 'night' : 'nights'}, {numberOfGuests} {numberOfGuests === 1 ? 'guest' : 'guests'}</p>
+                <p className="font-bold text-orange-600 mt-1">Total: ₱{totalCost}</p>
+              </div>
+              <p className="text-sm text-gray-600">By confirming, you agree to our booking terms and conditions.</p>
+            </div>
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={handleModalClose}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleModalConfirm}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                Confirm Booking
               </button>
             </div>
           </div>
