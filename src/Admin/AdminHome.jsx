@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine, FaExclamationCircle, FaMoneyCheckAlt, FaCoins } from "react-icons/fa";
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { FaUsers, FaMoneyBillAlt, FaClock, FaChartPie, FaChartLine, FaExclamationCircle, FaMoneyCheckAlt, FaCoins, FaChartBar } from "react-icons/fa";
 import ReactPaginate from "react-paginate";
 
 const AdminHome = () => {
   const navigate = useNavigate();
   const [bookingData, setBookingData] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
+  const [bookingStatusData, setBookingStatusData] = useState([]); // New state for booking status data
   const [mostBookedRoomType, setMostBookedRoomType] = useState("");
   const [metrics, setMetrics] = useState({
     totalBookings: 0,
@@ -20,50 +21,40 @@ const AdminHome = () => {
     monthlyNetIncome: 0,
   });
 
-  // Expense Tracker State
   const [expenses, setExpenses] = useState([]);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Expense");
   const [loading, setLoading] = useState(false);
 
-  // Time Period Filter State
   const [timePeriod, setTimePeriod] = useState("monthly");
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
-  // Pagination State for Expense History
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 6;
-
-  // Calculate the current page's expenses
   const offset = currentPage * itemsPerPage;
   const currentExpenses = expenses.slice(offset, offset + itemsPerPage);
   const pageCount = Math.ceil(expenses.length / itemsPerPage);
 
-  // Handle page change for pagination
   const handlePageClick = ({ selected }) => {
     setCurrentPage(selected);
   };
 
-  // Fetch room types, booking history, bookings data, complaints, and expenses from Firestore
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true); // Show loader while fetching data
+        setLoading(true);
 
-        // Fetch room types from the "rooms" collection
         const roomsSnapshot = await getDocs(collection(db, "rooms"));
         const rooms = roomsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
-        // Fetch booking history from the "bookingHistory" collection
         const bookingsHistorySnapshot = await getDocs(collection(db, "bookingHistory"));
         const bookingsHistory = bookingsHistorySnapshot.docs.map((doc) => doc.data());
 
-        // Filter bookings based on the selected time period
         const filteredBookings = bookingsHistory.filter((booking) => {
           const checkInDate = new Date(booking.checkInDate);
           if (timePeriod === "monthly") {
@@ -73,15 +64,12 @@ const AdminHome = () => {
           }
         });
 
-        // Fetch bookings from the "bookings" collection
         const bookingsSnapshot = await getDocs(collection(db, "bookings"));
         const bookings = bookingsSnapshot.docs.map((doc) => doc.data());
 
-        // Fetch complaints from the "complaintReports" collection
         const complaintsSnapshot = await getDocs(collection(db, "complaintReports"));
         const totalComplaints = complaintsSnapshot.size;
 
-        // Fetch expenses from the "expenses" collection
         const expensesSnapshot = await getDocs(collection(db, "expenses"));
         const expensesData = expensesSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -89,16 +77,13 @@ const AdminHome = () => {
         }));
         setExpenses(expensesData);
 
-        // Calculate total expenses
         const totalExpenses = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
-        // Initialize room totals
         const roomTotals = {};
         rooms.forEach((room) => {
           roomTotals[room.name] = { bookings: 0, revenue: 0 };
         });
 
-        // Calculate bookings and revenue for each room type
         filteredBookings.forEach((booking) => {
           const roomName = booking.roomDetails?.name;
           if (roomTotals[roomName]) {
@@ -107,7 +92,6 @@ const AdminHome = () => {
           }
         });
 
-        // Convert to array format for Recharts
         const dataArray = Object.keys(roomTotals).map((roomName) => ({
           name: roomName,
           bookings: roomTotals[roomName].bookings,
@@ -116,27 +100,21 @@ const AdminHome = () => {
 
         setBookingData(dataArray);
 
-        // Calculate most booked room type
         const mostBooked = Object.keys(roomTotals).reduce((a, b) =>
           roomTotals[a].bookings > roomTotals[b].bookings ? a : b
         );
 
         setMostBookedRoomType(mostBooked);
 
-        // Calculate total bookings and revenue from filtered bookings
         const totalBookings = filteredBookings.length;
         const totalRevenue = filteredBookings.reduce(
           (sum, booking) => sum + (booking.paymentDetails?.totalAmount || 0),
           0
         );
 
-        // Calculate pending payments (total entries in the bookings collection)
         const pendingPayments = bookings.length;
-
-        // Calculate monthly net income
         const monthlyNetIncome = totalRevenue - totalExpenses;
 
-        // Update metrics
         setMetrics({
           totalBookings,
           totalRevenue,
@@ -146,7 +124,6 @@ const AdminHome = () => {
           monthlyNetIncome,
         });
 
-        // Process revenue data for the line chart (group by month or year)
         const revenueByTime = {};
         filteredBookings.forEach((booking) => {
           const checkInDate = new Date(booking.checkInDate);
@@ -161,24 +138,36 @@ const AdminHome = () => {
           revenueByTime[timeKey] += booking.paymentDetails?.totalAmount || 0;
         });
 
-        // Convert to array format for Recharts
         const revenueArray = Object.keys(revenueByTime).map((timeKey) => ({
           timeKey,
           revenue: revenueByTime[timeKey],
         }));
 
         setRevenueData(revenueArray);
+
+        // Calculate walk-in and online bookings
+        const bookingStatusCounts = filteredBookings.reduce((acc, booking) => {
+          const status = booking.bookingType || "Walk-in"; // Default to Walk-in if not specified
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {});
+
+        const bookingStatusArray = Object.keys(bookingStatusCounts).map((status) => ({
+          status,
+          count: bookingStatusCounts[status],
+        }));
+
+        setBookingStatusData(bookingStatusArray);
       } catch (error) {
         console.error("Error fetching data: ", error);
       } finally {
-        setLoading(false); // Hide loader after fetching data
+        setLoading(false);
       }
     };
 
     fetchData();
-  }, [timePeriod, selectedMonth, selectedYear]); // Add selectedMonth and selectedYear as dependencies
+  }, [timePeriod, selectedMonth, selectedYear]);
 
-  // Handle expense form submission
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     if (!title || !amount) {
@@ -189,7 +178,6 @@ const AdminHome = () => {
     setLoading(true);
 
     try {
-      // Add expense to Firestore
       await addDoc(collection(db, "expenses"), {
         title,
         amount: parseFloat(amount),
@@ -197,7 +185,6 @@ const AdminHome = () => {
         createdAt: new Date().toISOString(),
       });
 
-      // Reset form and fetch updated expenses
       setTitle("");
       setAmount("");
       setType("Expense");
@@ -208,7 +195,6 @@ const AdminHome = () => {
       }));
       setExpenses(expensesData);
 
-      // Update total expenses and monthly net income in metrics
       const totalExpenses = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
       const monthlyNetIncome = metrics.totalRevenue - totalExpenses;
       setMetrics((prev) => ({ ...prev, totalExpenses, monthlyNetIncome }));
@@ -219,18 +205,15 @@ const AdminHome = () => {
     }
   };
 
-  // Data for the pie chart (bookings by room type)
   const pieChartData = bookingData.map((room) => ({
     name: room.name,
     value: room.bookings,
   }));
 
-  // Colors for the pie chart
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-100 p-6 relative">
-      {/* Loader */}
       {loading && (
         <div className="flex justify-center mt-10">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-orange-500 shadow-md"></div>
@@ -238,7 +221,6 @@ const AdminHome = () => {
         </div>
       )}
 
-      {/* Header Section */}
       <div className="w-full max-w-6xl mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
         <div className="flex items-center space-x-4">
@@ -270,9 +252,7 @@ const AdminHome = () => {
         </div>
       </div>
 
-      {/* Top Section: Metrics Cards */}
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        {/* Total Bookings */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
             <FaUsers className="text-4xl text-blue-500" />
@@ -281,7 +261,6 @@ const AdminHome = () => {
           <p className="text-2xl font-bold text-blue-500">{metrics.totalBookings}</p>
         </div>
 
-        {/* Total Revenue */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
             <FaMoneyBillAlt className="text-4xl text-green-500" />
@@ -290,7 +269,6 @@ const AdminHome = () => {
           <p className="text-2xl font-bold text-green-500">{metrics.totalRevenue}</p>
         </div>
 
-        {/* Pending Payments */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
             <FaClock className="text-4xl text-yellow-500" />
@@ -299,7 +277,6 @@ const AdminHome = () => {
           <p className="text-2xl font-bold text-yellow-500">{metrics.pendingPayments}</p>
         </div>
 
-        {/* Total Complaints */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
             <FaExclamationCircle className="text-4xl text-red-500" />
@@ -308,7 +285,6 @@ const AdminHome = () => {
           <p className="text-2xl font-bold text-red-500">{metrics.totalComplaints}</p>
         </div>
 
-        {/* Monthly Net Income */}
         <div className="bg-white p-6 shadow-md rounded-lg text-center hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-center mb-4">
             <FaCoins className="text-4xl text-purple-500" />
@@ -318,9 +294,7 @@ const AdminHome = () => {
         </div>
       </div>
 
-      {/* Middle Section: Expense Tracker and Expense History */}
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Expense Tracker Card */}
         <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
             <FaMoneyCheckAlt className="mr-2 text-purple-500" /> Expense Tracker
@@ -368,7 +342,6 @@ const AdminHome = () => {
           </form>
         </div>
 
-        {/* Expense History */}
         <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow md:col-span-2 relative min-h-[400px]">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
             <FaMoneyCheckAlt className="mr-2 text-purple-500" /> Expense History
@@ -393,7 +366,6 @@ const AdminHome = () => {
               </tbody>
             </table>
           </div>
-          {/* Pagination Container */}
           <div className="absolute bottom-4 left-0 right-0">
             <ReactPaginate
               previousLabel={"Previous"}
@@ -414,9 +386,7 @@ const AdminHome = () => {
         </div>
       </div>
 
-      {/* Bottom Section: Room Revenue Line Chart and Room Bookings Distribution */}
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Room Revenue (Line Chart) */}
         <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
             <FaChartLine className="mr-2 text-green-500" /> Room Revenue Over Time
@@ -432,7 +402,6 @@ const AdminHome = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Room Bookings (Pie Chart) */}
         <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
           <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
             <FaChartPie className="mr-2 text-blue-500" /> Room Bookings Distribution
@@ -460,7 +429,22 @@ const AdminHome = () => {
         </div>
       </div>
 
-      {/* Footer Section */}
+      {/* New Bar Chart Section */}
+      <div className="w-full max-w-6xl bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow mb-8">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+          <FaChartBar className="mr-2 text-purple-500" /> Booking Status Comparison
+        </h3>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart data={bookingStatusData}>
+            <XAxis dataKey="status" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="count" fill="#8884d8" name="Number of Bookings" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
       <div className="w-full max-w-6xl text-center text-gray-600 mt-8">
         <p>© 2023 Admin Dashboard. All rights reserved.</p>
       </div>

@@ -21,7 +21,25 @@ const PublicHome = () => {
   const [hoveredImage, setHoveredImage] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [activeQuestion, setActiveQuestion] = useState(null);
+  const [bookedDates, setBookedDates] = useState([]);
+const [selectedRoom, setSelectedRoom] = useState("");
 
+
+const fetchBookedDates = async (roomType) => {
+  try {
+    const response = await fetch(`/api/bookings?roomType=${roomType}`);
+    const data = await response.json();
+    setBookedDates(data.bookedDates);
+  } catch (error) {
+    console.error("Error fetching booked dates:", error);
+  }
+};
+
+const handleRoomChange = (e) => {
+  const roomType = e.target.value;
+  setSelectedRoom(roomType);
+  fetchBookedDates(roomType);
+};
   // Toggle FAQ accordion
   const toggleQuestion = (index) => {
     if (activeQuestion === index) {
@@ -168,13 +186,17 @@ const PublicHome = () => {
                   <FaBed className="mr-2 text-orange-500" />
                   Room Type
                 </label>
-                <select className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300">
-                  <option value="" className="text-gray-800">Select Room Type</option>
-                  <option value="standard" className="text-gray-800">Standard Double Room</option>
-                  <option value="deluxe" className="text-gray-800">Twin Room</option>
-                  <option value="suite" className="text-gray-800">Triple Room</option>
-                  <option value="family" className="text-gray-800">Family Room</option>
-                </select>
+                <select 
+  className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300"
+  onChange={handleRoomChange}
+  value={selectedRoom}
+>
+  <option value="" className="text-gray-800">Select Room Type</option>
+  <option value="standard" className="text-gray-800">Standard Double Room</option>
+  <option value="deluxe" className="text-gray-800">Twin Room</option>
+  <option value="suite" className="text-gray-800">Triple Room</option>
+  <option value="family" className="text-gray-800">Family Room</option>
+</select>
               </div>
 
               {/* Check In / Out */}

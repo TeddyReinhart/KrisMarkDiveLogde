@@ -97,6 +97,8 @@ function BookingForm() {
     setIsModalOpen(true);
   };
 
+  const isWalkInBooking = true; // Set this based on your logic
+
   const handleModalConfirm = async () => {
     setIsModalOpen(false);
     if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.mobileNumber) {
@@ -112,32 +114,35 @@ function BookingForm() {
           totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
           guestInfo,
           timestamp: new Date(),
+          bookingType: isWalkInBooking ? "walk-in" : "online", // Always "walk-in" unless changed
         };
-
+  
         const bookingsRef = collection(db, "bookings");
         await addDoc(bookingsRef, bookingData);
-
-        // Send booking confirmation email
-        const emailResponse = await fetch(`http://localhost:3000/send-booking-confirmation`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: guestInfo.email,
-            firstName: guestInfo.firstName,
-            lastName: guestInfo.lastName,
-            selectedRoom: selectedRoom?.name,
-            checkInDate: checkInDate?.toDateString(),
-            checkOutDate: checkOutDate?.toDateString(),
-            totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
-          }),
-        });
-
-        if (!emailResponse.ok) {
-          console.error("Failed to send email");
-        } else {
-          console.log("Booking confirmation email sent successfully");
+  
+        // Send booking confirmation email (only for online bookings)
+        if (!isWalkInBooking) {
+          const emailResponse = await fetch(`http://localhost:3000/send-booking-confirmation`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: guestInfo.email,
+              firstName: guestInfo.firstName,
+              lastName: guestInfo.lastName,
+              selectedRoom: selectedRoom?.name,
+              checkInDate: checkInDate?.toDateString(),
+              checkOutDate: checkOutDate?.toDateString(),
+              totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
+            }),
+          });
+  
+          if (!emailResponse.ok) {
+            console.error("Failed to send email");
+          } else {
+            console.log("Booking confirmation email sent successfully");
+          }
         }
-
+  
         navigate("/home");
       } catch (error) {
         console.error("Error:", error);

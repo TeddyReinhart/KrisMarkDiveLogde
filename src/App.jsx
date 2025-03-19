@@ -25,6 +25,7 @@ import Settings from "./StaffSide/Settings";
 import AdminSetting from './Admin/AdminSettings';
 import PublicHome from "./PublicPage/PublicHome"; 
 import PublicBooking from "./PublicPage/PublicBooking";
+import OnlineBookings from "./StaffSide/OnlineBookings";
 
 
 const App = () => {
@@ -73,6 +74,7 @@ const App = () => {
           <Route path="rooms-availability" element={<RoomAvailability />} />
           <Route path="rooms-availability/booking-form" element={<BookingForm />} />
           <Route path="book-rooms" element={<BookRooms />} />
+          <Route path="online-bookings" element={<OnlineBookings />} />
           <Route path="book-history" element={<BookHistory />} />
           <Route path="report" element={<Report />} />
           <Route path="setting" element={<Settings/>} />

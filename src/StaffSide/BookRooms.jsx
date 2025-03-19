@@ -7,6 +7,7 @@ const BookRooms = () => {
   const [filteredBookings, setFilteredBookings] = useState([]); // State to store filtered bookings
   const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const [filter, setFilter] = useState("all"); // State for filter (e.g., by room type)
+  const [bookingTypeFilter, setBookingTypeFilter] = useState("all"); // State for booking type filter
   const [selectedBooking, setSelectedBooking] = useState(null); // State to store the selected booking for modal
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false); // State to control payment modal visibility
@@ -27,12 +28,25 @@ const BookRooms = () => {
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      // Fetch bookings
       const bookingsQuerySnapshot = await getDocs(collection(db, "bookings"));
-      const bookingsData = bookingsQuerySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const bookingsData = bookingsQuerySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        if (!data.guestInfo) {
+          console.warn("Booking with missing guestInfo:", doc.id);
+        }
+        return {
+          id: doc.id,
+          ...data,
+          guestInfo: data.guestInfo || {
+            firstName: "",
+            lastName: "",
+            email: "",
+            mobileNumber: "",
+            gender: "",
+            specialRequest: "",
+          },
+        };
+      });
 
       setBookings(bookingsData);
       setFilteredBookings(bookingsData); // Initialize filtered bookings
@@ -51,18 +65,24 @@ const BookRooms = () => {
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
-    filterBookings(query, filter);
+    filterBookings(query, filter, bookingTypeFilter);
   };
 
   // Handle filter changes
   const handleFilterChange = (e) => {
     const selectedFilter = e.target.value;
     setFilter(selectedFilter);
-    filterBookings(query, selectedFilter);
+    filterBookings(searchQuery, selectedFilter, bookingTypeFilter);
   };
 
-  // Filter bookings based on search query and filter
-  const filterBookings = (query, filter) => {
+  // Handle booking type filter changes
+  const handleBookingTypeFilter = (type) => {
+    setBookingTypeFilter(type);
+    filterBookings(searchQuery, filter, type);
+  };
+
+  // Filter bookings based on search query, room filter, and booking type filter
+  const filterBookings = (query, roomFilter, bookingType) => {
     let filtered = bookings.filter((booking) => {
       const matchesSearch =
         booking.roomDetails?.name.toLowerCase().includes(query) ||
@@ -70,10 +90,13 @@ const BookRooms = () => {
         booking.guestInfo.lastName.toLowerCase().includes(query) ||
         booking.guestInfo.email.toLowerCase().includes(query);
 
-      const matchesFilter =
-        filter === "all" || booking.roomDetails?.name === filter;
+      const matchesRoomFilter =
+        roomFilter === "all" || booking.roomDetails?.name === roomFilter;
 
-      return matchesSearch && matchesFilter;
+      const matchesBookingType =
+        bookingType === "all" || booking.bookingType === bookingType;
+
+      return matchesSearch && matchesRoomFilter && matchesBookingType;
     });
     setFilteredBookings(filtered);
     setCurrentPage(1); // Reset to the first page after filtering
@@ -203,6 +226,34 @@ const BookRooms = () => {
             </option>
           ))}
         </select>
+
+        {/* Booking Type Filter Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleBookingTypeFilter("all")}
+            className={`px-4 py-2 rounded-lg ${
+              bookingTypeFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => handleBookingTypeFilter("walk-in")}
+            className={`px-4 py-2 rounded-lg ${
+              bookingTypeFilter === "walk-in" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Walk-in
+          </button>
+          <button
+            onClick={() => handleBookingTypeFilter("online")}
+            className={`px-4 py-2 rounded-lg ${
+              bookingTypeFilter === "online" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            Online
+          </button>
+        </div>
       </div>
 
       {/* Bookings Table */}
@@ -216,24 +267,25 @@ const BookRooms = () => {
               <th className="p-4 text-left text-gray-700 font-bold">Guests</th>
               <th className="p-4 text-left text-gray-700 font-bold">Guest Name</th>
               <th className="p-4 text-left text-gray-700 font-bold">Email</th>
+              <th className="p-4 text-left text-gray-700 font-bold">Booking Type</th>
               <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
             </tr>
           </thead>
-        <tbody>
-        {isLoading ? (
-        <tr>
-          <td colSpan="5" className="text-center p-16">
-            <div className="flex justify-end items-center pr-55">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-              <p className="text-gray-600 font-medium ml-3 animate-bounce">
-                Loading...
-              </p>
-            </div>
-          </td>
-        </tr>
-      ) : currentBookings.length === 0 ? (
+          <tbody>
+            {isLoading ? (
               <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-600">
+                <td colSpan="8" className="text-center p-16">
+                  <div className="flex justify-end items-center pr-55">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+                    <p className="text-gray-600 font-medium ml-3 animate-bounce">
+                      Loading...
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : currentBookings.length === 0 ? (
+              <tr>
+                <td colSpan="8" className="p-6 text-center text-gray-600">
                   No bookings found.
                 </td>
               </tr>
@@ -249,9 +301,12 @@ const BookRooms = () => {
                   <td className="p-4 text-gray-700">{booking.checkOutDate}</td>
                   <td className="p-4 text-gray-700">{booking.numberOfGuests}</td>
                   <td className="p-4 text-gray-700">
-                    {booking.guestInfo.firstName} {booking.guestInfo.lastName}
+                    {booking.guestInfo ? `${booking.guestInfo.firstName} ${booking.guestInfo.lastName}` : "N/A"}
                   </td>
-                  <td className="p-4 text-gray-700">{booking.guestInfo.email}</td>
+                  <td className="p-4 text-gray-700">
+                    {booking.guestInfo ? booking.guestInfo.email : "N/A"}
+                  </td>
+                  <td className="p-4 text-gray-700 capitalize">{booking.bookingType}</td>
                   <td className="p-4">
                     <button
                       onClick={(e) => {
