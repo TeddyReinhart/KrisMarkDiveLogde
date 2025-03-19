@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "./Firebase/Firebase";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./Firebase/Firebase";
 
 import loginpic from "./images/loginpic.jpg";
 import logo from "./images/logo1.png";
-
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -206,15 +205,9 @@ const Login = () => {
           </form>
 
           <div className="text-center mt-4">
-            <a href="#" className="text-sm text-blue-500 hover:underline">
+            <Link to="/forgot-password" className="text-sm text-blue-500 hover:underline">
               Forgot password?
-            </a>
-          </div>
-
-          <div className="text-center mt-2">
-            <a href="#" className="text-sm text-gray-500 hover:underline">
-              Trouble Logging in?
-            </a>
+            </Link>
           </div>
         </div>
       </div>

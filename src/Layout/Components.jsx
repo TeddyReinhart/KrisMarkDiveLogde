@@ -126,48 +126,41 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
   );
 }
 
-// ✅ Table Component
+// ✅ Table Components
 export function Table({ children }) {
-  return (
-    <table className="min-w-full bg-white border border-gray-200">
-      {children}
-    </table>
-  );
+  return <table className="min-w-full bg-white border border-gray-200">{children}</table>;
 }
 
-// ✅ Table Head Component
 export function TableHead({ children }) {
-  return (
-    <thead className="bg-gray-100">
-      <tr>{children}</tr>
-    </thead>
-  );
+  return <thead className="bg-gray-100"><tr>{children}</tr></thead>;
 }
 
-// ✅ Table Body Component
 export function TableBody({ children }) {
   return <tbody>{children}</tbody>;
 }
 
-// ✅ Table Row Component
 export function TableRow({ children }) {
   return <tr className="hover:bg-gray-50">{children}</tr>;
 }
 
-// ✅ Table Header Cell Component
 export function TableHeaderCell({ children }) {
-  return (
-    <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">
-      {children}
-    </th>
-  );
+  return <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-semibold text-gray-700">{children}</th>;
 }
 
-// ✅ Table Cell Component
 export function TableCell({ children }) {
+  return <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-700">{children}</td>;
+}
+
+// ✅ Textarea Component
+export function Textarea({ name, value, onChange, placeholder, rows = 4 }) {
   return (
-    <td className="px-6 py-4 border-b border-gray-200 text-sm text-gray-700">
-      {children}
-    </td>
+    <textarea
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      rows={rows}
+      className="border p-2 rounded w-full"
+    ></textarea>
   );
 }

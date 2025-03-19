@@ -25,6 +25,8 @@ import Settings from "./StaffSide/Settings";
 import AdminSetting from './Admin/AdminSettings';
 import PublicHome from "./PublicPage/PublicHome"; 
 import PublicBooking from "./PublicPage/PublicBooking";
+import ForgotPassword from "./ForgotPassword";
+import StaffForm from "./Admin/StaffForm";
 
 
 const App = () => {
@@ -39,6 +41,7 @@ const App = () => {
         <Route path="/public-booking" element={<PublicBooking />} />
         <Route path="/Report" element={<ComplaintReportForm />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
 
         {/* Admin Routes */}
@@ -54,7 +57,7 @@ const App = () => {
           <Route path="room-management" element={<AdminRoomManagement />} />
           <Route path="complaints" element={<ReportsTable />} />
           <Route path="admin-rooms-availability" element={<RoomAvailability />} />
-          <Route path="create-user" element={<Register />} />
+          <Route path="create-user" element={<StaffForm />} />
           <Route path="reports" element={<Reports />} />
           <Route path="setting" element={<AdminSetting/>} />
           {/* Add more nested routes here if needed */}

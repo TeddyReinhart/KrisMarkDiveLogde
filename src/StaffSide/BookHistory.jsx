@@ -287,7 +287,7 @@ const BookHistory = () => {
             <td colSpan="9" className="text-center p-16">
               <div className="flex justify-center items-center">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-                <p className="text-gray-600 font-medium ml-3 animate-bounce">
+                <p className="text-gray-600 font-medium ml-3 ">
                 Loading...
               </p>
               </div>
