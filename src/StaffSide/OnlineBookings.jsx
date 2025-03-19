@@ -10,9 +10,9 @@ import { db } from "../Firebase/Firebase";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 function OnlineBookings() {
-  const [onlineBookings, setOnlineBookings] = useState([]); // State to store online bookings
-  const [filter, setFilter] = useState("pending"); // State for tab filter (pending, confirmed, declined)
-  const [isLoading, setIsLoading] = useState(true); // State to indicate loading
+  const [onlineBookings, setOnlineBookings] = useState([]);
+  const [filter, setFilter] = useState("pending");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch online bookings from Firestore
   const fetchOnlineBookings = async () => {
@@ -92,30 +92,30 @@ function OnlineBookings() {
       <div className="mb-8 flex gap-4">
         <button
           onClick={() => setFilter("pending")}
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
             filter === "pending"
-              ? "bg-orange-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "bg-orange-500 text-white shadow-md"
+              : "bg-white text-gray-600 hover:bg-gray-100"
           }`}
         >
           Pending
         </button>
         <button
           onClick={() => setFilter("confirmed")}
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
             filter === "confirmed"
-              ? "bg-orange-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "bg-green-500 text-white shadow-md"
+              : "bg-white text-gray-600 hover:bg-gray-100"
           }`}
         >
           Confirmed
         </button>
         <button
           onClick={() => setFilter("declined")}
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all ${
             filter === "declined"
-              ? "bg-orange-500 text-white"
-              : "bg-gray-200 text-gray-700"
+              ? "bg-red-500 text-white shadow-md"
+              : "bg-white text-gray-600 hover:bg-gray-100"
           }`}
         >
           Declined
@@ -125,33 +125,41 @@ function OnlineBookings() {
       {/* Bookings Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-md">
         <table className="min-w-full">
-          <thead className="bg-orange-500">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="p-4 text-left text-gray-700 font-bold">Room</th>
-              <th className="p-4 text-left text-gray-700 font-bold">
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
+                Room
+              </th>
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
                 Check-in
               </th>
-              <th className="p-4 text-left text-gray-700 font-bold">
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
                 Check-out
               </th>
-              <th className="p-4 text-left text-gray-700 font-bold">Guests</th>
-              <th className="p-4 text-left text-gray-700 font-bold">
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
+                Guests
+              </th>
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
                 Guest Name
               </th>
-              <th className="p-4 text-left text-gray-700 font-bold">Email</th>
-              <th className="p-4 text-left text-gray-700 font-bold">Status</th>
-              <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
+                Email
+              </th>
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
+                Status
+              </th>
+              <th className="p-4 text-left text-sm font-semibold text-gray-600 uppercase">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
                 <td colSpan="8" className="text-center p-16">
-                  <div className="flex justify-end items-center pr-55">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-                    <p className="text-gray-600 font-medium ml-3 animate-bounce">
-                      Loading...
-                    </p>
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-500"></div>
+                    <p className="text-gray-600 font-medium ml-3">Loading...</p>
                   </div>
                 </td>
               </tr>
@@ -167,25 +175,29 @@ function OnlineBookings() {
                   key={booking.id}
                   className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                 >
-                  <td className="p-4 text-gray-700">
+                  <td className="p-4 text-sm text-gray-700">
                     {booking.roomDetails?.name}
                   </td>
-                  <td className="p-4 text-gray-700">{booking.checkInDate}</td>
-                  <td className="p-4 text-gray-700">{booking.checkOutDate}</td>
-                  <td className="p-4 text-gray-700">
+                  <td className="p-4 text-sm text-gray-700">
+                    {booking.checkInDate}
+                  </td>
+                  <td className="p-4 text-sm text-gray-700">
+                    {booking.checkOutDate}
+                  </td>
+                  <td className="p-4 text-sm text-gray-700">
                     {booking.numberOfGuests}
                   </td>
-                  <td className="p-4 text-gray-700">
+                  <td className="p-4 text-sm text-gray-700">
                     {booking.guestInfo
                       ? `${booking.guestInfo.firstName} ${booking.guestInfo.lastName}`
                       : "N/A"}
                   </td>
-                  <td className="p-4 text-gray-700">
+                  <td className="p-4 text-sm text-gray-700">
                     {booking.guestInfo ? booking.guestInfo.email : "N/A"}
                   </td>
-                  <td className="p-4 text-gray-700">
+                  <td className="p-4">
                     <span
-                      className={`px-2 py-1 rounded-full text-sm ${
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         booking.status === "pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : booking.status === "confirmed"
@@ -201,16 +213,16 @@ function OnlineBookings() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleConfirmBooking(booking)}
-                          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
                         >
-                          <FaCheckCircle className="inline-block mr-2" />
+                          <FaCheckCircle className="inline-block" />
                           Confirm
                         </button>
                         <button
                           onClick={() => handleDeclineBooking(booking)}
-                          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
                         >
-                          <FaTimesCircle className="inline-block mr-2" />
+                          <FaTimesCircle className="inline-block" />
                           Decline
                         </button>
                       </div>

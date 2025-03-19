@@ -369,85 +369,102 @@ const StepOne = ({
 );
 
 // Step Two Component
-const StepTwo = ({ guestInfo, handleGuestInfoChange, prevStep, nextStep }) => (
-  <div className="animate-fadeIn">
-    <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Guest Information</h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <div className="space-y-2">
-        <label className="block text-gray-700 font-medium mb-1">First Name</label>
-        <input
-          type="text"
-          name="firstName"
-          value={guestInfo.firstName}
-          onChange={handleGuestInfoChange}
-          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          required
-        />
+const StepTwo = ({ guestInfo, handleGuestInfoChange, prevStep, nextStep }) => {
+  const handlePhoneNumberChange = (e) => {
+    const { value } = e.target;
+    // Ensure the phone number starts with '63'
+    const formattedNumber = value.startsWith('63') ? value : `63${value}`;
+    if (formattedNumber.length <= 12){
+      handleGuestInfoChange({ target: { name: 'mobileNumber', value: formattedNumber } });
+    }
+   
+  };
+
+  return (
+    <div className="animate-fadeIn">
+      <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Guest Information</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="space-y-2">
+          <label className="block text-gray-700 font-medium mb-1">First Name</label>
+          <input
+            type="text"
+            name="firstName"
+            value={guestInfo.firstName}
+            onChange={handleGuestInfoChange}
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-gray-700 font-medium mb-1">Last Name</label>
+          <input
+            type="text"
+            name="lastName"
+            value={guestInfo.lastName}
+            onChange={handleGuestInfoChange}
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-gray-700 font-medium mb-1">Email Address</label>
+          <input
+            type="email"
+            name="email"
+            value={guestInfo.email}
+            onChange={handleGuestInfoChange}
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-gray-700 font-medium mb-1">Phone Number</label>
+          <div className="flex">
+            <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+              +63
+            </span>
+            <input
+              type="tel"
+              name="mobileNumber"
+              value={guestInfo.mobileNumber.replace(/^63/, '')} // Remove '63' prefix for display
+              onChange={handlePhoneNumberChange}
+              className="w-full p-3 rounded-r-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              required
+            />
+          </div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <label className="block text-gray-700 font-medium mb-1">Last Name</label>
-        <input
-          type="text"
-          name="lastName"
-          value={guestInfo.lastName}
+      <div className="mb-6">
+        <label className="block text-gray-700 font-medium mb-1">Special Requests</label>
+        <textarea
+          name="specialRequest"
+          value={guestInfo.specialRequest}
           onChange={handleGuestInfoChange}
+          rows="3"
           className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          required
-        />
+          placeholder="Any special requirements or requests for your stay..."
+        ></textarea>
       </div>
-      <div className="space-y-2">
-        <label className="block text-gray-700 font-medium mb-1">Email Address</label>
-        <input
-          type="email"
-          name="email"
-          value={guestInfo.email}
-          onChange={handleGuestInfoChange}
-          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="block text-gray-700 font-medium mb-1">Phone Number</label>
-        <input
-          type="tel"
-          name="mobileNumber"
-          value={guestInfo.mobileNumber}
-          onChange={handleGuestInfoChange}
-          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          required
-        />
+      <div className="flex justify-between">
+        <button
+          onClick={prevStep}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
+        >
+          <FaArrowLeft className="mr-2" />
+          Back
+        </button>
+        <button
+          onClick={nextStep}
+          disabled={!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.mobileNumber}
+          className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Review Booking
+          <FaArrowRight className="ml-2" />
+        </button>
       </div>
     </div>
-    <div className="mb-6">
-      <label className="block text-gray-700 font-medium mb-1">Special Requests</label>
-      <textarea
-        name="specialRequest"
-        value={guestInfo.specialRequest}
-        onChange={handleGuestInfoChange}
-        rows="3"
-        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-        placeholder="Any special requirements or requests for your stay..."
-      ></textarea>
-    </div>
-    <div className="flex justify-between">
-      <button
-        onClick={prevStep}
-        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
-      >
-        <FaArrowLeft className="mr-2" />
-        Back
-      </button>
-      <button
-        onClick={nextStep}
-        disabled={!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.mobileNumber}
-        className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Review Booking
-        <FaArrowRight className="ml-2" />
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 // Step Three Component
 const StepThree = ({ 
@@ -461,101 +478,108 @@ const StepThree = ({
   prevStep, 
   onConfirm, 
   setShowTermsModal 
-}) => (
-  <div className="animate-fadeIn">
-    <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Review & Confirm Your Booking</h2>
-    <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 mb-6">
-      <h3 className="text-lg font-semibold mb-4 text-blue-900">Booking Details</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 mb-4">
-        <div>
-          <p className="text-gray-500 text-sm">Check-in Date</p>
-          <p className="font-medium">{checkInDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Check-out Date</p>
-          <p className="font-medium">{checkOutDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Room Type</p>
-          <p className="font-medium">{selectedRoom.name}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Guests</p>
-          <p className="font-medium">{numberOfGuests} {numberOfGuests === 1 ? 'Guest' : 'Guests'}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Length of Stay</p>
-          <p className="font-medium">{numberOfNights} {numberOfNights === 1 ? 'Night' : 'Nights'}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Payment Method</p>
-          <p className="font-medium">Pay at Property</p>
-        </div>
-      </div>
-      <div className="border-t border-blue-200 pt-4 mt-4">
-        <h4 className="font-medium mb-2">Rate Summary</h4>
-        <div className="flex justify-between mb-2">
-          <span className="text-gray-600">{selectedRoom.name} ({numberOfNights} {numberOfNights === 1 ? 'night' : 'nights'} × ₱{selectedRoom.ratePerDay})</span>
-          <span>₱{totalCost}</span>
-        </div>
-        <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between font-bold">
-          <span>Total Amount</span>
-          <span className="text-xl text-orange-600">₱{totalCost}</span>
-        </div>
-      </div>
-    </div>
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-      <h3 className="text-lg font-semibold mb-4 text-blue-900">Guest Information</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
-        <div>
-          <p className="text-gray-500 text-sm">Guest Name</p>
-          <p className="font-medium">{guestInfo.firstName} {guestInfo.lastName}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Email Address</p>
-          <p className="font-medium">{guestInfo.email}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-sm">Phone Number</p>
-          <p className="font-medium">{guestInfo.mobileNumber}</p>
-        </div>
-        {guestInfo.specialRequest && (
-          <div className="md:col-span-2">
-            <p className="text-gray-500 text-sm">Special Requests</p>
-            <p className="font-medium">{guestInfo.specialRequest}</p>
+}) => {
+  const [isChecked, setIsChecked] = useState(false); // State for checkbox
+
+  return (
+    <div className="animate-fadeIn">
+      <h2 className="text-2xl font-bold mb-6 text-blue-900 border-b pb-2">Review & Confirm Your Booking</h2>
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-4 text-blue-900">Booking Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 mb-4">
+          <div>
+            <p className="text-gray-500 text-sm">Check-in Date</p>
+            <p className="font-medium">{checkInDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
-        )}
+          <div>
+            <p className="text-gray-500 text-sm">Check-out Date</p>
+            <p className="font-medium">{checkOutDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Room Type</p>
+            <p className="font-medium">{selectedRoom.name}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Guests</p>
+            <p className="font-medium">{numberOfGuests} {numberOfGuests === 1 ? 'Guest' : 'Guests'}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Length of Stay</p>
+            <p className="font-medium">{numberOfNights} {numberOfNights === 1 ? 'Night' : 'Nights'}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Payment Method</p>
+            <p className="font-medium">Pay at Property</p>
+          </div>
+        </div>
+        <div className="border-t border-blue-200 pt-4 mt-4">
+          <h4 className="font-medium mb-2">Rate Summary</h4>
+          <div className="flex justify-between mb-2">
+            <span className="text-gray-600">{selectedRoom.name} ({numberOfNights} {numberOfNights === 1 ? 'night' : 'nights'} × ₱{selectedRoom.ratePerDay})</span>
+            <span>₱{totalCost}</span>
+          </div>
+          <div className="border-t border-blue-200 pt-2 mt-2 flex justify-between font-bold">
+            <span>Total Amount</span>
+            <span className="text-xl text-orange-600">₱{totalCost}</span>
+          </div>
+        </div>
+      </div>
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-4 text-blue-900">Guest Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6">
+          <div>
+            <p className="text-gray-500 text-sm">Guest Name</p>
+            <p className="font-medium">{guestInfo.firstName} {guestInfo.lastName}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Email Address</p>
+            <p className="font-medium">{guestInfo.email}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm">Phone Number</p>
+            <p className="font-medium">+63{guestInfo.mobileNumber.replace(/^63/, '')}</p>
+          </div>
+          {guestInfo.specialRequest && (
+            <div className="md:col-span-2">
+              <p className="text-gray-500 text-sm">Special Requests</p>
+              <p className="font-medium">{guestInfo.specialRequest}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mb-6">
+        <label className="flex items-start cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isChecked}
+            onChange={(e) => setIsChecked(e.target.checked)}
+            className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 rounded"
+          />
+          <span className="ml-2 text-gray-700 text-sm">
+            I agree to the <a href="#" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="text-orange-500 hover:underline">terms and conditions</a>, and I confirm that the information provided is correct.
+          </span>
+        </label>
+      </div>
+      <div className="flex justify-between">
+        <button
+          onClick={prevStep}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
+        >
+          <FaArrowLeft className="mr-2" />
+          Back
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={!isChecked}
+          className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Confirm Booking
+          <FaCheckCircle className="ml-2" />
+        </button>
       </div>
     </div>
-    <div className="mb-6">
-      <label className="flex items-start cursor-pointer">
-        <input
-          type="checkbox"
-          className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 rounded"
-        />
-        <span className="ml-2 text-gray-700 text-sm">
-          I agree to the <a href="#" onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }} className="text-orange-500 hover:underline">terms and conditions</a>, and I confirm that the information provided is correct.
-        </span>
-      </label>
-    </div>
-    <div className="flex justify-between">
-      <button
-        onClick={prevStep}
-        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
-      >
-        <FaArrowLeft className="mr-2" />
-        Back
-      </button>
-      <button
-        onClick={onConfirm}
-        className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
-      >
-        Confirm Booking
-        <FaCheckCircle className="ml-2" />
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ 
