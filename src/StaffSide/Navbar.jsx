@@ -51,6 +51,21 @@ function Navbar() {
             </NavLink>
             </li>
 
+
+            <li className="mb-4">
+              <NavLink
+                to="/home/online-bookings"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 p-3 rounded-lg text-lg font-semibold w-full transition-all duration-200 hover:bg-orange-500 hover:text-white ${
+                   isActive ? "bg-orange-500 text-white" : "hover:bg-gray-200 text-black"
+                  }`
+                }
+              >
+                <CalendarDays className="w-6 h-6" />
+                <span>Online Bookings</span>
+              </NavLink>
+            </li>
+
             {/* Booking */}
             <li className="mb-4">
               <NavLink
@@ -62,9 +77,11 @@ function Navbar() {
                 }
               >
                 <CalendarDays className="w-6 h-6" />
-                <span>Booking</span>
+                <span>Booked</span>
               </NavLink>
             </li>
+
+       
 
             {/* Booking History */}
             <li className="mb-4">

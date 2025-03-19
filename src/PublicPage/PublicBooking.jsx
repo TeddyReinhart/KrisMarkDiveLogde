@@ -399,15 +399,8 @@ const PublicBooking = () => {
               type="tel"
               name="phone"
               value={formData.phone}
-              onChange={(e) => {
-                const value = e.target.value;
-               
-                if (/^\d{0,11}$/.test(value)) {
-                  handleChange(e); 
-                }
-              }}
+              onChange={handleChange}
               className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              maxLength="11"
               required
             />
           </div>

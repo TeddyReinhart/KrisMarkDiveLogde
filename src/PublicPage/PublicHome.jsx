@@ -22,38 +22,8 @@ const PublicHome = () => {
   const [hoveredImage, setHoveredImage] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [activeQuestion, setActiveQuestion] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const navigate = useNavigate();
 
-  // Handle image loading
-  useEffect(() => {
-    let loadedImages = 0;
-    const totalImages = 2; // Background image + Contact Us image
-
-    const handleImageLoad = () => {
-      loadedImages++;
-      if (loadedImages === totalImages) {
-        setLoading(false); // Set loading to false once all images are loaded
-      }
-    };
-
-    // Load background image
-    const bgImage = new Image();
-    bgImage.src = backgroundImage;
-    bgImage.onload = handleImageLoad;
-
-    // Load contact us image
-    const contactImg = new Image();
-    contactImg.src = contactImage;
-    contactImg.onload = handleImageLoad;
-
-    // Cleanup
-    return () => {
-      bgImage.onload = null;
-      contactImg.onload = null;
-    };
-  }, []);
-
+  // Toggle FAQ accordion
   const toggleQuestion = (index) => {
     setActiveQuestion(activeQuestion === index ? null : index);
   };
@@ -184,25 +154,90 @@ const PublicHome = () => {
     <div>
       <Navbar />
       <section
-      id="home"
-      className="relative min-h-screen flex flex-col items-center justify-center text-white text-center bg-cover bg-center"
-      style={{ backgroundImage: `url(${backgroundImage})` }}
-    >
-      <div className="absolute inset-0 bg-opacity-80"></div>
-      <div className="relative z-10 px-4 max-w-6xl mx-auto w-full">
-        <div className="mb-16 transform transition-all duration-700 translate-y-0 opacity-100">
-          <h2 className="text-lg md:text-xl uppercase tracking-widest mb-2 font-light">
-            Discover Paradise
-          </h2>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white drop-shadow-lg">
-            KRISMARK <span className="text-orange-500">DIVE LODGE</span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-100">
-            Experience world-class diving and luxurious comfort in the heart of Moalboal, Cebu
-          </p>
+        id="home"
+        className="relative min-h-screen flex flex-col items-center justify-center text-white text-center bg-cover bg-center"
+        style={{ backgroundImage: `url(${backgroundImage})` }}>
+        <div className="absolute inset-0 bg-opacity-80"></div> 
+        <div className="relative z-10 px-4 max-w-6xl mx-auto w-full">
+          <div className="mb-16 transform transition-all duration-700 translate-y-0 opacity-100">
+            <h2 className="text-lg md:text-xl uppercase tracking-widest mb-2 font-light">Discover Paradise</h2>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white drop-shadow-lg">
+              KRISMARK <span className="text-orange-500">DIVE LODGE</span>
+            </h1>
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-100">
+              Experience world-class diving and luxurious comfort in the heart of Moalboal, Cebu
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
+
+        <div className="absolute bottom-8 w-full max-w-5xl mx-auto px-4">
+          <div className="relative z-10 transform transition-all duration-700 translate-y-0 opacity-100">
+            <h3 className="text-xl font-semibold mb-8 text-white text-center">Find Your Perfect Stay</h3> 
+
+            <div className="flex flex-col md:flex-row items-end gap-4"> 
+              {/* Room Type */}
+              <div className="flex-1 space-y-2">
+                <label className="flex items-center text-white text-sm font-medium">
+                  <FaBed className="mr-2 text-orange-500" />
+                  Room Type
+                </label>
+                <select className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300">
+                  <option value="" className="text-gray-800">Select Room Type</option>
+                  <option value="standard" className="text-gray-800">Standard Double Room</option>
+                  <option value="deluxe" className="text-gray-800">Twin Room</option>
+                  <option value="suite" className="text-gray-800">Triple Room</option>
+                  <option value="family" className="text-gray-800">Family Room</option>
+                </select>
+              </div>
+
+              {/* Check In / Out */}
+              <div className="flex-1 space-y-2">
+                <label className="flex items-center text-white text-sm font-medium">
+                  <FaCalendarAlt className="mr-2 text-orange-500" />
+                  Check In / Out
+                </label>
+                <div className="grid grid-cols-2 gap-3"> {/* Adjusted gap to 3 */}
+                  <input
+                    type="date"
+                    value={checkInDate}
+                    onChange={(e) => setCheckInDate(e.target.value)}
+                    className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300"
+                    placeholder="Check in"
+                  />
+                  <input
+                    type="date"
+                    value={checkOutDate}
+                    onChange={(e) => setCheckOutDate(e.target.value)}
+                    className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300"
+                    placeholder="Check out"
+                  />
+                </div>
+              </div>
+
+              {/* Guests */}
+              <div className="flex-1 space-y-2">
+                <label className="flex items-center text-white text-sm font-medium">
+                  <FaUsers className="mr-2 text-orange-500" />
+                  Guests
+                </label>
+                <select className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300">
+                  <option value="1" className="text-gray-800">1 Guest</option>
+                  <option value="2" defaultValue className="text-gray-800">2 Guests</option>
+                  <option value="3" className="text-gray-800">3 Guests</option>
+                  <option value="4" className="text-gray-800">4 Guests</option>
+                  <option value="5" className="text-gray-800">5+ Guests</option>
+                </select>
+              </div>
+
+              {/* Check Availability Button */}
+              <button className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center shadow-lg hover:shadow-xl ml-auto cursor-pointer">
+                Check Availability
+                <FaArrowRight className="ml-2" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section id="overview" className="py-20 px-4 bg-gradient-to-b from-white to-blue-50">
         {/* Overview content stays the same */}
