@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, User } from "lucide-react";  // Import icons
+import { Settings, User, ChevronLeft, ChevronRight, Hotel } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 function AdminSetting() {
@@ -11,48 +11,61 @@ function AdminSetting() {
     navigate(-1); // Go back to the previous page
   };
 
+  // Settings menu items (Security and Notifications removed)
+  const settingsMenuItems = [
+    {
+      icon: <Hotel className="w-6 h-6 text-orange-500" />,
+      title: "General",
+      description: "Manage and update hotel details",
+      route: "/general",
+    },
+    {
+      icon: <User className="w-6 h-6 text-orange-500" />,
+      title: "Account",
+      description: "Staff account creation form",
+      route: "/admin-home/create-user",
+    },
+  ];
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-gradient-to-br from-orange-50 to-gray-50 min-h-screen">
       {/* Back Button and Page Title */}
-      <div className="flex items-center space-x-4 mb-6">
-        <button
-          onClick={handleBack}
-          className="text-orange-500 hover:text-orange-600"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-left" viewBox="0 0 16 16">
-            <path d="M12.854 8.354a.5.5 0 0 0 0-.708L8.707 4.707a.5.5 0 0 0-.707 0L4.146 7.646a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .707 0l4.001-4z" />
-          </svg>
-        </button>
-        <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-      </div>
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center space-x-4 mb-8">
+          <button
+            onClick={handleBack}
+            className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md text-orange-500 hover:text-orange-600 transition-colors hover:bg-orange-50"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-orange-700 text-transparent bg-clip-text">Settings</h2>
+        </div>
 
-      {/* Settings Card Section */}
-      <div className="space-y-6">
-        {/* General Section */}
-        <div className="bg-gray-200 p-6 rounded-xl shadow-md flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <Settings className="w-8 h-8 text-orange-500" />
-            <div>
-              <h3 className="text-xl font-semibold text-orange-500">General</h3>
-              <p className="text-sm text-gray-600">Manage and update hotel details</p>
+        {/* Settings Card Section */}
+        <div className="space-y-4">
+          {settingsMenuItems.map((item, index) => (
+            <div
+              key={index}
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300"
+            >
+              <NavLink 
+                to={item.route} 
+                className="flex justify-between items-center w-full"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-orange-100 rounded-lg">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-800">{item.title}</h3>
+                    <p className="text-sm text-gray-600">{item.description}</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-orange-500" />
+              </NavLink>
             </div>
-          </div>
-          <NavLink to="/general" className="text-orange-500 hover:text-orange-600">Edit</NavLink>
+          ))}
         </div>
-
-        {/* Account Section */}
-         <div className="bg-gray-200 p-6 rounded-xl shadow-md flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-          <User className="w-8 h-8 text-orange-500" />
-        <div>
-          {/* Use NavLink to redirect to the desired route */}
-          <NavLink to="/admin-home/create-user" className="text-orange-500 hover:text-orange-600">
-            <h3 className="text-xl font-semibold text-orange-500">Account</h3>
-            <p className="text-sm text-gray-600">Staff account creation form</p>
-          </NavLink>
-        </div>
-      </div>
-    </div>
       </div>
     </div>
   );
