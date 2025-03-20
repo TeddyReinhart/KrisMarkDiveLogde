@@ -5,12 +5,15 @@ import {
   doc,
   deleteDoc,
   addDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 function OnlineBookings() {
   const [onlineBookings, setOnlineBookings] = useState([]);
+  const [confirmedBookings, setConfirmedBookings] = useState([]); // State for confirmed bookings
   const [filter, setFilter] = useState("pending");
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,16 +39,35 @@ function OnlineBookings() {
     }
   };
 
+  // Fetch confirmed bookings from Firestore
+  const fetchConfirmedBookings = async () => {
+    try {
+      const bookingsRef = collection(db, "bookings");
+      const q = query(bookingsRef, where("status", "==", "confirmed")); // Query for confirmed bookings
+      const querySnapshot = await getDocs(q);
+      const confirmedData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setConfirmedBookings(confirmedData);
+    } catch (error) {
+      console.error("Error fetching confirmed bookings: ", error);
+    }
+  };
+
   useEffect(() => {
     fetchOnlineBookings();
-  }, []);
+    if (filter === "confirmed") {
+      fetchConfirmedBookings(); // Fetch confirmed bookings only when the confirmed filter is active
+    }
+  }, [filter]); // Add filter as a dependency
 
   // Handle confirm booking
   const handleConfirmBooking = async (booking) => {
     try {
       // Restructure the booking data to match the BookingForm structure
       const bookingData = {
-        selectedRoom: booking.roomDetails?.name, // Ensure this matches the BookingForm structure
+        selectedRoom: booking.roomDetails?.name,
         roomDetails: booking.roomDetails || {
           name: booking.roomDetails?.name,
           ratePerDay: booking.roomDetails?.ratePerDay,
@@ -53,14 +75,15 @@ function OnlineBookings() {
           image: booking.roomDetails?.image,
           status: booking.roomDetails?.status,
         },
-        checkInDate: booking.checkInDate, // Ensure this is a valid date string or Date object
-        checkOutDate: booking.checkOutDate, // Ensure this is a valid date string or Date object
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
         numberOfGuests: booking.numberOfGuests,
         guestInfo: booking.guestInfo || {
           firstName: booking.guestInfo?.firstName,
           lastName: booking.guestInfo?.lastName,
           email: booking.guestInfo?.email,
           mobileNumber: booking.guestInfo?.mobileNumber,
+          gender: booking.guestInfo?.gender,
           specialRequest: booking.guestInfo?.specialRequest || "None",
         },
         status: "confirmed", // Add status field
@@ -76,8 +99,9 @@ function OnlineBookings() {
       const bookingRef = doc(db, "onlinebooking", booking.id);
       await deleteDoc(bookingRef);
 
-      // Refresh the list of online bookings
+      // Refresh the list of online and confirmed bookings
       fetchOnlineBookings();
+      fetchConfirmedBookings();
       alert("Booking confirmed and moved to bookings!");
     } catch (error) {
       console.error("Error confirming booking: ", error);
@@ -106,6 +130,7 @@ function OnlineBookings() {
           lastName: booking.guestInfo?.lastName,
           email: booking.guestInfo?.email,
           mobileNumber: booking.guestInfo?.mobileNumber,
+          gender: booking.guestInfo?.gender,
           specialRequest: booking.guestInfo?.specialRequest || "None",
         },
         status: "declined", // Add status field
@@ -229,6 +254,74 @@ function OnlineBookings() {
                   </div>
                 </td>
               </tr>
+            ) : filter === "confirmed" ? (
+              confirmedBookings.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-6 text-center text-gray-600">
+                    No confirmed bookings found.
+                  </td>
+                </tr>
+              ) : (
+                confirmedBookings.map((booking) => (
+                  <tr
+                    key={booking.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => openModal(booking)} // Make the entire row clickable
+                  >
+                    <td className="p-4 text-sm text-gray-700">{booking.roomDetails?.name}</td>
+                    <td className="p-4 text-sm text-gray-700">{booking.checkInDate}</td>
+                    <td className="p-4 text-sm text-gray-700">{booking.checkOutDate}</td>
+                    <td className="p-4 text-sm text-gray-700">{booking.numberOfGuests}</td>
+                    <td className="p-4 text-sm text-gray-700">
+                      {booking.guestInfo
+                        ? `${booking.guestInfo.firstName} ${booking.guestInfo.lastName}`
+                        : "N/A"}
+                    </td>
+                    <td className="p-4 text-sm text-gray-700">
+                      {booking.guestInfo ? booking.guestInfo.email : "N/A"}
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          booking.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : booking.status === "confirmed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {booking.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      {booking.status === "pending" && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click event from firing
+                              handleConfirmBooking(booking);
+                            }}
+                            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                          >
+                            <FaCheckCircle className="inline-block" />
+                            Confirm
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click event from firing
+                              handleDeclineBooking(booking);
+                            }}
+                            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+                          >
+                            <FaTimesCircle className="inline-block" />
+                            Decline
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )
             ) : filteredBookings.length === 0 ? (
               <tr>
                 <td colSpan="8" className="p-6 text-center text-gray-600">
@@ -422,10 +515,10 @@ function OnlineBookings() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <div>
-                  
-                  
-                       
-                    
+                      <p className="font-semibold text-gray-800">Gender</p>
+                      <p className="text-gray-600">
+                        {selectedBooking.guestInfo.gender || 'N/A'}
+                      </p>
                     </div>
                   </div>
                 </div>
