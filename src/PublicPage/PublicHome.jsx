@@ -5,7 +5,7 @@ import Footer from "./Footer";
 import { FaCalendarAlt, FaUsers, FaBed, FaArrowRight, FaMapMarkerAlt, FaPhone, FaEnvelope, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import backgroundImage from "./Images/Background.png";
 import underwaterImage from './Images/Picture1.png';
-import contactImage from './Images/ContactUsPic.png';
+import contactImage from './Images/12.jpg';
 import Pic1 from "./Images/Pic1.png";
 import Pic2 from "./Images/Pic2.png";
 import Pic3 from "./Images/Pic3.png";
@@ -140,13 +140,7 @@ const PublicHome = () => {
         answer: "Our lodge offers free Wi-Fi, air-conditioned rooms, a dive center, and a communal lounge area. Additional amenities include on-site gear rental and tour assistance."
     }
 ];
-    if (loading) {
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-orange-500"></div>
-        </div>
-      );
-    }
+  
 
 
 
@@ -170,73 +164,8 @@ const PublicHome = () => {
           </div>
         </div>
 
-        <div className="absolute bottom-8 w-full max-w-5xl mx-auto px-4">
-          <div className="relative z-10 transform transition-all duration-700 translate-y-0 opacity-100">
-            <h3 className="text-xl font-semibold mb-8 text-white text-center">Find Your Perfect Stay</h3> 
-
-            <div className="flex flex-col md:flex-row items-end gap-4"> 
-              {/* Room Type */}
-              <div className="flex-1 space-y-2">
-                <label className="flex items-center text-white text-sm font-medium">
-                  <FaBed className="mr-2 text-orange-500" />
-                  Room Type
-                </label>
-                <select className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300">
-                  <option value="" className="text-gray-800">Select Room Type</option>
-                  <option value="standard" className="text-gray-800">Standard Double Room</option>
-                  <option value="deluxe" className="text-gray-800">Twin Room</option>
-                  <option value="suite" className="text-gray-800">Triple Room</option>
-                  <option value="family" className="text-gray-800">Family Room</option>
-                </select>
-              </div>
-
-              {/* Check In / Out */}
-              <div className="flex-1 space-y-2">
-                <label className="flex items-center text-white text-sm font-medium">
-                  <FaCalendarAlt className="mr-2 text-orange-500" />
-                  Check In / Out
-                </label>
-                <div className="grid grid-cols-2 gap-3"> {/* Adjusted gap to 3 */}
-                  <input
-                    type="date"
-                    value={checkInDate}
-                    onChange={(e) => setCheckInDate(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300"
-                    placeholder="Check in"
-                  />
-                  <input
-                    type="date"
-                    value={checkOutDate}
-                    onChange={(e) => setCheckOutDate(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300"
-                    placeholder="Check out"
-                  />
-                </div>
-              </div>
-
-              {/* Guests */}
-              <div className="flex-1 space-y-2">
-                <label className="flex items-center text-white text-sm font-medium">
-                  <FaUsers className="mr-2 text-orange-500" />
-                  Guests
-                </label>
-                <select className="w-full p-3 rounded-lg bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-black placeholder-white placeholder-opacity-70 shadow-sm hover:shadow transition-shadow duration-300">
-                  <option value="1" className="text-gray-800">1 Guest</option>
-                  <option value="2" defaultValue className="text-gray-800">2 Guests</option>
-                  <option value="3" className="text-gray-800">3 Guests</option>
-                  <option value="4" className="text-gray-800">4 Guests</option>
-                  <option value="5" className="text-gray-800">5+ Guests</option>
-                </select>
-              </div>
-
-              {/* Check Availability Button */}
-              <button className="flex-1 md:flex-none bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center shadow-lg hover:shadow-xl ml-auto cursor-pointer">
-                Check Availability
-                <FaArrowRight className="ml-2" />
-              </button>
-            </div>
-          </div>
-        </div>
+        
+        
       </section>
 
       <section id="overview" className="py-20 px-4 bg-gradient-to-b from-white to-blue-50">

@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
-import { FaCalendarAlt, FaUsers, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes, FaInfoCircle } from "react-icons/fa";
+import { FaCalendarAlt, FaUsers, FaCheckCircle, FaArrowRight, FaArrowLeft, FaTimes } from "react-icons/fa";
 
 function BookingForm() {
   const { state } = useLocation();
@@ -15,7 +15,6 @@ function BookingForm() {
   const [checkInDate, setCheckInDate] = useState(null);
   const [checkOutDate, setCheckOutDate] = useState(null);
   const [numberOfNights, setNumberOfNights] = useState(0);
-  const [roomChoice, setRoomChoice] = useState(selectedRoom?.name || "");
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [bookedDates, setBookedDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,11 +23,13 @@ function BookingForm() {
     firstName: "",
     lastName: "",
     email: "",
-    gender: "Female",
     mobileNumber: "",
     specialRequest: "None",
   });
 
+  const [errors, setErrors] = useState({});
+
+  // Fetch booked dates for the selected room
   const fetchBookedDates = async () => {
     if (!selectedRoom?.name) return;
 
@@ -57,9 +58,11 @@ function BookingForm() {
     fetchBookedDates();
   }, [selectedRoom]);
 
+  // Check if a date is already booked
   const isDateBooked = (date) =>
     bookedDates.some((bookedDate) => date.toDateString() === bookedDate.toDateString());
 
+  // Calculate the number of nights between check-in and check-out dates
   const calculateNights = (checkIn, checkOut) => {
     if (checkIn && checkOut) {
       const diffTime = checkOut - checkIn;
@@ -69,6 +72,7 @@ function BookingForm() {
     return 0;
   };
 
+  // Handle date changes
   const handleDateChange = (type, date) => {
     if (type === "checkIn") {
       setCheckInDate(date);
@@ -79,29 +83,54 @@ function BookingForm() {
     }
   };
 
+  // Handle guest information changes
   const handleGuestInfoChange = (e) => {
     const { name, value } = e.target;
     setGuestInfo((prev) => ({ ...prev, [name]: value }));
+
+    // Clear errors when the user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
+  // Validate guest information
+  const validateGuestInfo = () => {
+    const newErrors = {};
+    if (!guestInfo.firstName) newErrors.firstName = "First name is required";
+    if (!guestInfo.lastName) newErrors.lastName = "Last name is required";
+    if (!guestInfo.email) newErrors.email = "Email is required";
+    if (!guestInfo.mobileNumber) newErrors.mobileNumber = "Phone number is required";
+    else if (!/^\d{11}$/.test(guestInfo.mobileNumber)) {
+      newErrors.mobileNumber = "Phone number must be 11 digits";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Navigate to the next step
   const handleNext = () => {
-    if (step === 1 && numberOfNights > 0 && roomChoice) setStep(2);
-    else if (step === 2) setStep(3);
+    if (step === 1 && numberOfNights > 0) {
+      setStep(2);
+    } else if (step === 2 && validateGuestInfo()) {
+      setStep(3);
+    }
   };
 
+  // Navigate to the previous step
   const handlePrevious = () => {
     if (step > 1) setStep(step - 1);
   };
 
+  // Handle booking confirmation
   const handleConfirmBooking = () => {
     setIsModalOpen(true);
   };
 
-  const isWalkInBooking = true; // Set this based on your logic
-
+  // Handle modal confirmation
   const handleModalConfirm = async () => {
     setIsModalOpen(false);
-    if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.mobileNumber) {
+    if (validateGuestInfo()) {
       try {
         const bookingData = {
           selectedRoom: selectedRoom?.name,
@@ -114,35 +143,12 @@ function BookingForm() {
           totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
           guestInfo,
           timestamp: new Date(),
-          bookingType: isWalkInBooking ? "walk-in" : "online", // Always "walk-in" unless changed
+          bookingType: "walk-in", // Default to walk-in booking
         };
-  
+
         const bookingsRef = collection(db, "bookings");
         await addDoc(bookingsRef, bookingData);
-  
-        // Send booking confirmation email (only for online bookings)
-        if (!isWalkInBooking) {
-          const emailResponse = await fetch(`http://localhost:3000/send-booking-confirmation`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: guestInfo.email,
-              firstName: guestInfo.firstName,
-              lastName: guestInfo.lastName,
-              selectedRoom: selectedRoom?.name,
-              checkInDate: checkInDate?.toDateString(),
-              checkOutDate: checkOutDate?.toDateString(),
-              totalCost: selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0,
-            }),
-          });
-  
-          if (!emailResponse.ok) {
-            console.error("Failed to send email");
-          } else {
-            console.log("Booking confirmation email sent successfully");
-          }
-        }
-  
+
         navigate("/home");
       } catch (error) {
         console.error("Error:", error);
@@ -150,10 +156,12 @@ function BookingForm() {
     }
   };
 
+  // Handle modal close
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
 
+  // Calculate total cost
   const totalCost = selectedRoom ? selectedRoom.ratePerDay * numberOfNights : 0;
 
   if (!selectedRoom) {
@@ -280,6 +288,7 @@ function BookingForm() {
                 className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
+              {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
             </div>
             <div className="space-y-2">
               <label className="block text-gray-700 font-medium mb-1">Last Name</label>
@@ -291,6 +300,7 @@ function BookingForm() {
                 className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
+              {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
             </div>
             <div className="space-y-2">
               <label className="block text-gray-700 font-medium mb-1">Email Address</label>
@@ -302,24 +312,25 @@ function BookingForm() {
                 className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
+              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <label className="block text-gray-700 font-medium mb-1">Phone Number</label>
               <input
                 type="tel"
-                name="phone"
-                value={formData.phone}
+                name="mobileNumber"
+                value={guestInfo.mobileNumber}
                 onChange={(e) => {
                   const value = e.target.value;
-                 
                   if (/^\d{0,11}$/.test(value)) {
-                    handleChange(e); 
+                    handleGuestInfoChange(e);
                   }
                 }}
                 className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                maxLength="11" 
+                maxLength="11"
                 required
               />
+              {errors.mobileNumber && <p className="text-red-500 text-sm">{errors.mobileNumber}</p>}
             </div>
           </div>
           <div className="mb-6">
@@ -422,13 +433,8 @@ function BookingForm() {
           </div>
           <div className="mb-6">
             <label className="flex items-start cursor-pointer">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 rounded"
-              />
-              <span className="ml-2 text-gray-700 text-sm">
-                I agree to the <a href="#" onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }} className="text-orange-500 hover:underline">terms and conditions</a>, and I confirm that the information provided is correct.
-              </span>
+            
+            
             </label>
           </div>
           <div className="flex justify-between">

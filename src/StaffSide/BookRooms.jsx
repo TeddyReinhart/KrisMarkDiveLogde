@@ -3,37 +3,32 @@ import { collection, getDocs, deleteDoc, doc, addDoc, getDoc } from "firebase/fi
 import { db } from "../Firebase/Firebase";
 
 const BookRooms = () => {
-  const [bookings, setBookings] = useState([]); // State to store all bookings
-  const [filteredBookings, setFilteredBookings] = useState([]); // State to store filtered bookings
-  const [searchQuery, setSearchQuery] = useState(""); // State for search query
-  const [filter, setFilter] = useState("all"); // State for filter (e.g., by room type)
-  const [bookingTypeFilter, setBookingTypeFilter] = useState("all"); // State for booking type filter
-  const [selectedBooking, setSelectedBooking] = useState(null); // State to store the selected booking for modal
-  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false); // State to control payment modal visibility
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false); // State to control confirmation modal visibility
-  const [isLoading, setIsLoading] = useState(true); // State to indicate loading
+  const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [bookingTypeFilter, setBookingTypeFilter] = useState("all");
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [paymentDetails, setPaymentDetails] = useState({
     billingName: "",
     billingAddress: "",
-    paymentMethod: "cash", // Default to cash
-    gcashNumber: "", // Only required if paymentMethod is gcash
+    paymentMethod: "cash",
+    gcashNumber: "",
   });
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Number of items per page
+  const [itemsPerPage] = useState(10);
 
-  // Fetch bookings from Firestore
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
       const bookingsQuerySnapshot = await getDocs(collection(db, "bookings"));
       const bookingsData = bookingsQuerySnapshot.docs.map((doc) => {
         const data = doc.data();
-        if (!data.guestInfo) {
-          console.warn("Booking with missing guestInfo:", doc.id);
-        }
         return {
           id: doc.id,
           ...data,
@@ -45,11 +40,18 @@ const BookRooms = () => {
             gender: "",
             specialRequest: "",
           },
+          roomDetails: data.roomDetails || {
+            name: "",
+            ratePerDay: 0,
+            capacity: 0,
+            image: "",
+            status: "",
+          },
         };
       });
-
+  
       setBookings(bookingsData);
-      setFilteredBookings(bookingsData); // Initialize filtered bookings
+      setFilteredBookings(bookingsData);
     } catch (error) {
       console.error("Error fetching data: ", error);
     } finally {
@@ -61,21 +63,18 @@ const BookRooms = () => {
     fetchBookings();
   }, []);
 
-  // Handle search query changes
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
     filterBookings(query, filter, bookingTypeFilter);
   };
 
-  // Handle filter changes
   const handleFilterChange = (e) => {
     const selectedFilter = e.target.value;
     setFilter(selectedFilter);
-    filterBookings(query, selectedFilter);
+    filterBookings(searchQuery, selectedFilter, bookingTypeFilter);
   };
 
-  // Filter bookings based on search query, room filter, and booking type filter
   const filterBookings = (query, roomFilter, bookingType) => {
     let filtered = bookings.filter((booking) => {
       const matchesSearch =
@@ -83,26 +82,23 @@ const BookRooms = () => {
         booking.guestInfo.firstName.toLowerCase().includes(query) ||
         booking.guestInfo.lastName.toLowerCase().includes(query) ||
         booking.guestInfo.email.toLowerCase().includes(query);
-
+  
       const matchesRoomFilter =
         roomFilter === "all" || booking.roomDetails?.name === roomFilter;
-
+  
       const matchesBookingType =
         bookingType === "all" || booking.bookingType === bookingType;
-
+  
       return matchesSearch && matchesRoomFilter && matchesBookingType;
     });
     setFilteredBookings(filtered);
-    setCurrentPage(1); // Reset to the first page after filtering
+    setCurrentPage(1);
   };
-
-  // Handle Check-out button click
   const handleCheckOutClick = (id) => {
     setSelectedBooking(id);
-    setIsPaymentModalOpen(true); // Open payment modal
+    setIsPaymentModalOpen(true);
   };
 
-  // Handle payment form input changes
   const handlePaymentInputChange = (e) => {
     const { name, value } = e.target;
     setPaymentDetails((prev) => ({
@@ -111,37 +107,31 @@ const BookRooms = () => {
     }));
   };
 
-  // Calculate the number of days stayed
   const calculateDaysStayed = (checkInDate, checkOutDate) => {
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
     const timeDiff = checkOut - checkIn;
-    return Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+    return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
   };
 
-  // Calculate the total amount
   const calculateTotalAmount = (roomRate, daysStayed) => {
     return roomRate * daysStayed;
   };
 
-  // Handle payment form submission
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Fetch the booking data
       const bookingRef = doc(db, "bookings", selectedBooking);
       const bookingSnapshot = await getDoc(bookingRef);
       const bookingData = bookingSnapshot.data();
 
-      // Calculate billing details
       const daysStayed = calculateDaysStayed(bookingData.checkInDate, bookingData.checkOutDate);
       const totalAmount = calculateTotalAmount(bookingData.roomDetails?.ratePerDay || 0, daysStayed);
 
-      // Add the booking data to the bookingHistory collection with payment details
       await addDoc(collection(db, "bookingHistory"), {
         ...bookingData,
-        checkOutTimestamp: new Date(), // Add a timestamp for when the check-out occurred
+        checkOutTimestamp: new Date(),
         paymentDetails: {
           ...paymentDetails,
           daysStayed,
@@ -149,50 +139,41 @@ const BookRooms = () => {
         },
       });
 
-      // Delete the booking from the bookings collection
       await deleteDoc(bookingRef);
 
-      // Show confirmation modal
       setIsConfirmationModalOpen(true);
-      setIsPaymentModalOpen(false); // Close payment modal
+      setIsPaymentModalOpen(false);
       setPaymentDetails({
         billingName: "",
         billingAddress: "",
         paymentMethod: "cash",
         gcashNumber: "",
-      }); // Reset payment details
+      });
 
-      fetchBookings(); // Refresh the list of bookings
+      fetchBookings();
     } catch (error) {
       console.error("Error during check-out and payment: ", error);
-      
     }
   };
 
-  // Open modal with booking details
   const openModal = (booking) => {
     setSelectedBooking(booking.id);
     setIsModalOpen(true);
   };
 
-  // Close modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedBooking(null);
   };
 
-  // Get the selected booking for the payment modal
   const selectedBookingData = filteredBookings.find((b) => b.id === selectedBooking);
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentBookings = filteredBookings.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Calculate total pages
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
 
   return (
@@ -224,7 +205,7 @@ const BookRooms = () => {
         {/* Booking Type Filter Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={() => handleBookingTypeFilter("all")}
+            onClick={() => setBookingTypeFilter("all")}
             className={`px-4 py-2 rounded-lg ${
               bookingTypeFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"
             }`}
@@ -232,7 +213,7 @@ const BookRooms = () => {
             All
           </button>
           <button
-            onClick={() => handleBookingTypeFilter("walk-in")}
+            onClick={() => setBookingTypeFilter("walk-in")}
             className={`px-4 py-2 rounded-lg ${
               bookingTypeFilter === "walk-in" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"
             }`}
@@ -240,7 +221,7 @@ const BookRooms = () => {
             Walk-in
           </button>
           <button
-            onClick={() => handleBookingTypeFilter("online")}
+            onClick={() => setBookingTypeFilter("online")}
             className={`px-4 py-2 rounded-lg ${
               bookingTypeFilter === "online" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"
             }`}
@@ -265,57 +246,57 @@ const BookRooms = () => {
               <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
             </tr>
           </thead>
-        <tbody>
-        {isLoading ? (
-        <tr>
-          <td colSpan="5" className="text-center p-16">
-            <div className="flex justify-end items-center pr-55">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-              <p className="text-gray-600 font-medium ml-3 animate-bounce">
-                Loading...
-              </p>
-            </div>
-          </td>
-        </tr>
-      ) : currentBookings.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="p-6 text-center text-gray-600">
-                  No bookings found.
-                </td>
-              </tr>
-            ) : (
-              currentBookings.map((booking) => (
-                <tr
-                  key={booking.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => openModal(booking)}
-                >
-                  <td className="p-4 text-gray-700">{booking.roomDetails?.name}</td>
-                  <td className="p-4 text-gray-700">{booking.checkInDate}</td>
-                  <td className="p-4 text-gray-700">{booking.checkOutDate}</td>
-                  <td className="p-4 text-gray-700">{booking.numberOfGuests}</td>
-                  <td className="p-4 text-gray-700">
-                    {booking.guestInfo ? `${booking.guestInfo.firstName} ${booking.guestInfo.lastName}` : "N/A"}
-                  </td>
-                  <td className="p-4 text-gray-700">
-                    {booking.guestInfo ? booking.guestInfo.email : "N/A"}
-                  </td>
-                  <td className="p-4 text-gray-700 capitalize">{booking.bookingType}</td>
-                  <td className="p-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent row click event
-                        handleCheckOutClick(booking.id);
-                      }}
-                      className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors"
-                    >
-                      Check-out
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
+          <tbody>
+  {isLoading ? (
+    <tr>
+      <td colSpan="8" className="text-center p-16">
+        <div className="flex justify-end items-center pr-55">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+          <p className="text-gray-600 font-medium ml-3 animate-bounce">
+            Loading...
+          </p>
+        </div>
+      </td>
+    </tr>
+  ) : currentBookings.length === 0 ? (
+    <tr>
+      <td colSpan="8" className="p-6 text-center text-gray-600">
+        No bookings found.
+      </td>
+    </tr>
+  ) : (
+    currentBookings.map((booking) => (
+      <tr
+        key={booking.id}
+        className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+        onClick={() => openModal(booking)}
+      >
+        <td className="p-4 text-gray-700">{booking.roomDetails?.name}</td>
+        <td className="p-4 text-gray-700">{booking.checkInDate}</td>
+        <td className="p-4 text-gray-700">{booking.checkOutDate}</td>
+        <td className="p-4 text-gray-700">{booking.numberOfGuests}</td>
+        <td className="p-4 text-gray-700">
+          {booking.guestInfo ? `${booking.guestInfo.firstName} ${booking.guestInfo.lastName}` : "N/A"}
+        </td>
+        <td className="p-4 text-gray-700">
+          {booking.guestInfo ? booking.guestInfo.email : "N/A"}
+        </td>
+        <td className="p-4 text-gray-700 capitalize">{booking.bookingType}</td>
+        <td className="p-4">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCheckOutClick(booking.id);
+            }}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-200 transition-colors"
+          >
+            Check-out
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
         </table>
       </div>
 
@@ -510,101 +491,101 @@ const BookRooms = () => {
 
       {/* Payment Modal */}
       {isPaymentModalOpen && selectedBookingData && (
-        <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Payment Details</h2>
-            <form onSubmit={handlePaymentSubmit}>
-              <div className="space-y-4">
-                {/* Room Rate, Days Stayed, and Total Cost */}
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-4">Billing Summary</h3>
-                  <div className="space-y-2">
-                    <p>
-                      <span className="font-semibold">Room Rate:</span>{" "}
-                      ₱{selectedBookingData.roomDetails?.ratePerDay} per day
-                    </p>
-                    <p>
-                      <span className="font-semibold">Days Stayed:</span>{" "}
-                      {calculateDaysStayed(selectedBookingData.checkInDate, selectedBookingData.checkOutDate)} days
-                    </p>
-                    <p>
-                      <span className="font-semibold">Total Cost:</span>{" "}
-                      ₱{calculateTotalAmount(
-                        selectedBookingData.roomDetails?.ratePerDay,
-                        calculateDaysStayed(selectedBookingData.checkInDate, selectedBookingData.checkOutDate)
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Payment Form */}
-                <div>
-                  <label className="block text-gray-700 font-semibold">Billing Name</label>
-                  <input
-                    type="text"
-                    name="billingName"
-                    value={paymentDetails.billingName}
-                    onChange={handlePaymentInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold">Email Address</label>
-                  <input
-                    type="text"
-                    name="billingAddress"
-                    value={paymentDetails.billingAddress}
-                    onChange={handlePaymentInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold">Payment Method</label>
-                  <select
-                    name="paymentMethod"
-                    value={paymentDetails.paymentMethod}
-                    onChange={handlePaymentInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="gcash">GCash</option>
-                  </select>
-                </div>
-                {paymentDetails.paymentMethod === "gcash" && (
-                  <div>
-                    <label className="block text-gray-700 font-semibold">Ref. No.</label>
-                    <input
-                      type="text"
-                      name="gcashNumber"
-                      value={paymentDetails.gcashNumber}
-                      onChange={handlePaymentInputChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
+  <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
+    <div className="bg-white p-8 rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">Payment Details</h2>
+      <form onSubmit={handlePaymentSubmit}>
+        <div className="space-y-4">
+          {/* Room Rate, Days Stayed, and Total Cost */}
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Billing Summary</h3>
+            <div className="space-y-2">
+              <p>
+                <span className="font-semibold">Room Rate:</span>{" "}
+                ₱{selectedBookingData.roomDetails?.ratePerDay} per day
+              </p>
+              <p>
+                <span className="font-semibold">Days Stayed:</span>{" "}
+                {calculateDaysStayed(selectedBookingData.checkInDate, selectedBookingData.checkOutDate)} days
+              </p>
+              <p>
+                <span className="font-semibold">Total Cost:</span>{" "}
+                ₱{calculateTotalAmount(
+                  selectedBookingData.roomDetails?.ratePerDay,
+                  calculateDaysStayed(selectedBookingData.checkInDate, selectedBookingData.checkOutDate)
                 )}
-              </div>
-              <div className="mt-6 flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsPaymentModalOpen(false)}
-                  className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-500 transition-colors"
-                >
-                  Confirm Payment
-                </button>
-              </div>
-            </form>
+              </p>
+            </div>
           </div>
+
+          {/* Payment Form */}
+          <div>
+            <label className="block text-gray-700 font-semibold">Billing Name</label>
+            <input
+              type="text"
+              name="billingName"
+              value={paymentDetails.billingName}
+              onChange={handlePaymentInputChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold">Email Address</label>
+            <input
+              type="text"
+              name="billingAddress"
+              value={paymentDetails.billingAddress}
+              onChange={handlePaymentInputChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 font-semibold">Payment Method</label>
+            <select
+              name="paymentMethod"
+              value={paymentDetails.paymentMethod}
+              onChange={handlePaymentInputChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="cash">Cash</option>
+              <option value="gcash">GCash</option>
+            </select>
+          </div>
+          {paymentDetails.paymentMethod === "gcash" && (
+            <div>
+              <label className="block text-gray-700 font-semibold">Ref. No.</label>
+              <input
+                type="text"
+                name="gcashNumber"
+                value={paymentDetails.gcashNumber}
+                onChange={handlePaymentInputChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+          )}
         </div>
-      )}
+        <div className="mt-6 flex justify-end gap-4">
+          <button
+            type="button"
+            onClick={() => setIsPaymentModalOpen(false)}
+            className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-500 transition-colors"
+          >
+            Confirm Payment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
 
       {/* Confirmation Modal */}
       {isConfirmationModalOpen && (

@@ -12,6 +12,7 @@ const AdminHome = () => {
   const [revenueData, setRevenueData] = useState([]);
   const [bookingStatusData, setBookingStatusData] = useState([]);
   const [mostBookedRoomType, setMostBookedRoomType] = useState("");
+  const [bookingTypesData, setBookingTypesData] = useState([]);
   const [metrics, setMetrics] = useState({
     totalBookings: 0,
     totalRevenue: 0,
@@ -45,128 +46,37 @@ const AdminHome = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        const roomsSnapshot = await getDocs(collection(db, "rooms"));
-        const rooms = roomsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        const bookingsHistorySnapshot = await getDocs(collection(db, "bookingHistory"));
-        const bookingsHistory = bookingsHistorySnapshot.docs.map((doc) => doc.data());
-
-        const filteredBookings = bookingsHistory.filter((booking) => {
-          const checkInDate = new Date(booking.checkInDate);
-          if (timePeriod === "monthly") {
-            return checkInDate.toISOString().slice(0, 7) === selectedMonth;
-          } else {
-            return checkInDate.getFullYear().toString() === selectedYear;
-          }
-        });
-
+  
+        // Fetch bookings
         const bookingsSnapshot = await getDocs(collection(db, "bookings"));
         const bookings = bookingsSnapshot.docs.map((doc) => doc.data());
-
-        const complaintsSnapshot = await getDocs(collection(db, "complaintReports"));
-        const totalComplaints = complaintsSnapshot.size;
-
-        const expensesSnapshot = await getDocs(collection(db, "expenses"));
-        const expensesData = expensesSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setExpenses(expensesData);
-
-        const totalExpenses = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-
-        const roomTotals = {};
-        rooms.forEach((room) => {
-          roomTotals[room.name] = { bookings: 0, revenue: 0 };
-        });
-
-        filteredBookings.forEach((booking) => {
-          const roomName = booking.roomDetails?.name;
-          if (roomTotals[roomName]) {
-            roomTotals[roomName].bookings += 1;
-            roomTotals[roomName].revenue += booking.paymentDetails?.totalAmount || 0;
-          }
-        });
-
-        const dataArray = Object.keys(roomTotals).map((roomName) => ({
-          name: roomName,
-          bookings: roomTotals[roomName].bookings,
-          revenue: roomTotals[roomName].revenue,
-        }));
-
-        setBookingData(dataArray);
-
-        const mostBooked = Object.keys(roomTotals).reduce((a, b) =>
-          roomTotals[a].bookings > roomTotals[b].bookings ? a : b
+  
+        // Count online and walk-in bookings
+        const bookingTypesCount = bookings.reduce(
+          (acc, booking) => {
+            const type = booking.bookingType || "Walk-in"; // Default to "Walk-in" if not specified
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+          },
+          { Online: 0, "Walk-in": 0 }
         );
-
-        setMostBookedRoomType(mostBooked);
-
-        const totalBookings = filteredBookings.length;
-        const totalRevenue = filteredBookings.reduce(
-          (sum, booking) => sum + (booking.paymentDetails?.totalAmount || 0),
-          0
-        );
-
-        const pendingPayments = bookings.length;
-        const monthlyNetIncome = totalRevenue - totalExpenses;
-
-        setMetrics({
-          totalBookings,
-          totalRevenue,
-          pendingPayments,
-          totalComplaints,
-          totalExpenses,
-          monthlyNetIncome,
-        });
-
-        const revenueByTime = {};
-        filteredBookings.forEach((booking) => {
-          const checkInDate = new Date(booking.checkInDate);
-          const timeKey =
-            timePeriod === "monthly"
-              ? checkInDate.toLocaleString("default", { month: "short", year: "numeric" })
-              : checkInDate.getFullYear().toString();
-
-          if (!revenueByTime[timeKey]) {
-            revenueByTime[timeKey] = 0;
-          }
-          revenueByTime[timeKey] += booking.paymentDetails?.totalAmount || 0;
-        });
-
-        const revenueArray = Object.keys(revenueByTime).map((timeKey) => ({
-          timeKey,
-          revenue: revenueByTime[timeKey],
+  
+        // Format data for the bar chart
+        const bookingTypesArray = Object.keys(bookingTypesCount).map((type) => ({
+          type,
+          count: bookingTypesCount[type],
         }));
-
-        setRevenueData(revenueArray);
-
-        const bookingStatusCounts = filteredBookings.reduce((acc, booking) => {
-          const status = booking.bookingType || "Walk-in";
-          acc[status] = (acc[status] || 0) + 1;
-          return acc;
-        }, {});
-
-        const bookingStatusArray = Object.keys(bookingStatusCounts).map((status) => ({
-          status,
-          count: bookingStatusCounts[status],
-        }));
-
-        setBookingStatusData(bookingStatusArray);
+  
+        setBookingTypesData(bookingTypesArray);
       } catch (error) {
-        console.error("Error fetching data: ", error);
+        console.error("Error fetching booking types data: ", error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchData();
-  }, [timePeriod, selectedMonth, selectedYear]);
-
+  }, []);
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     if (!title || !amount) {
@@ -442,6 +352,20 @@ const AdminHome = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
+          <div className="bg-white p-6 shadow-md rounded-lg hover:shadow-lg transition-shadow">
+    <h3 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+      <FaChartBar className="mr-2 text-purple-500" /> Booking Types Comparison
+    </h3>
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart data={bookingTypesData}>
+        <XAxis dataKey="type" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Bar dataKey="count" fill="#8884d8" name="Number of Bookings" />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
         </div>
 
         {/* Footer Section */}
