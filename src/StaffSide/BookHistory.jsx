@@ -12,10 +12,10 @@ const BookHistory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [isLoading, setIsLoading] = useState(true); // State to indicate loading
   const [selectedBookings, setSelectedBookings] = useState([]); // State to store selected bookings for deletion
-  
+
   // Confirmation modal state
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState(''); // 'single' or 'multiple'
+  const [deleteType, setDeleteType] = useState(""); // 'single' or 'multiple'
   const [bookingToDelete, setBookingToDelete] = useState(null);
 
   // Time Period Filter State
@@ -124,13 +124,13 @@ const BookHistory = () => {
 
   // Open confirmation modal for deletion
   const openConfirmModal = (type, id = null) => {
-    if (type === 'multiple' && selectedBookings.length === 0) {
+    if (type === "multiple" && selectedBookings.length === 0) {
       alert("No bookings selected.");
       return;
     }
-    
+
     setDeleteType(type);
-    if (type === 'single') {
+    if (type === "single") {
       setBookingToDelete(id);
     }
     setIsConfirmModalOpen(true);
@@ -139,24 +139,24 @@ const BookHistory = () => {
   // Close confirmation modal
   const closeConfirmModal = () => {
     setIsConfirmModalOpen(false);
-    setDeleteType('');
+    setDeleteType("");
     setBookingToDelete(null);
   };
 
   // Delete selected bookings
   const deleteSelectedBookings = async () => {
     try {
-      if (deleteType === 'multiple') {
+      if (deleteType === "multiple") {
         for (const id of selectedBookings) {
           await deleteDoc(doc(db, "bookingHistory", id));
         }
         setBookings(bookings.filter((booking) => !selectedBookings.includes(booking.id)));
         setSelectedBookings([]); // Clear selection
-      } else if (deleteType === 'single' && bookingToDelete) {
+      } else if (deleteType === "single" && bookingToDelete) {
         await deleteDoc(doc(db, "bookingHistory", bookingToDelete));
         setBookings(bookings.filter((booking) => booking.id !== bookingToDelete));
       }
-      
+
       fetchBookingHistory(); // Refresh data
       closeConfirmModal();
     } catch (error) {
@@ -252,7 +252,7 @@ const BookHistory = () => {
           Export to Excel
         </button>
         <button
-          onClick={() => openConfirmModal('multiple')}
+          onClick={() => openConfirmModal("multiple")}
           className="w-full md:w-auto bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
         >
           Delete Selected
@@ -277,25 +277,26 @@ const BookHistory = () => {
               <th className="p-4 text-left text-gray-700 font-bold w-1/12">Guests</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/6">Guest Name</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/4">Email</th>
+              <th className="p-4 text-left text-gray-700 font-bold w-1/6">Booking Type</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/6">Check-out Time</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/12">Actions</th>
             </tr>
           </thead>
           <tbody>
-          {isLoading ? (
-          <tr>
-            <td colSpan="9" className="text-center p-16">
-              <div className="flex justify-center items-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-                <p className="text-gray-600 font-medium ml-3 animate-bounce">
-                Loading...
-              </p>
-              </div>
-            </td>
-          </tr>
-        ) : currentBookings.length === 0 ? (
+            {isLoading ? (
               <tr>
-                <td colSpan="9" className="p-6 text-center text-gray-600">
+                <td colSpan="10" className="text-center p-16">
+                  <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+                    <p className="text-gray-600 font-medium ml-3 animate-bounce">
+                      Loading...
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : currentBookings.length === 0 ? (
+              <tr>
+                <td colSpan="10" className="p-6 text-center text-gray-600">
                   No booking history found.
                 </td>
               </tr>
@@ -320,12 +321,13 @@ const BookHistory = () => {
                     {booking.guestInfo.firstName} {booking.guestInfo.lastName}
                   </td>
                   <td className="p-4 text-gray-700 w-1/4">{booking.guestInfo.email}</td>
+                  <td className="p-4 text-gray-700 w-1/6">{booking.bookingType}</td>
                   <td className="p-4 text-gray-700 w-1/6">
                     {booking.checkOutTimestamp?.toDate().toLocaleString()}
                   </td>
                   <td className="p-4 text-gray-700 w-1/12">
                     <button
-                      onClick={() => openConfirmModal('single', booking.id)}
+                      onClick={() => openConfirmModal("single", booking.id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       Delete
@@ -352,7 +354,7 @@ const BookHistory = () => {
             key={index + 1}
             onClick={() => paginate(index + 1)}
             className={`px-4 py-2 mx-1 ${
-              currentPage === index + 1 ? 'text-orange font-bold' : 'bg-gray-200 text-gray-700'
+              currentPage === index + 1 ? "text-orange font-bold" : "bg-gray-200 text-gray-700"
             } rounded-lg`}
           >
             {index + 1}
@@ -411,6 +413,10 @@ const BookHistory = () => {
                 {selectedBooking.guestInfo.specialRequest}
               </p>
               <p>
+                <span className="font-semibold">Booking Type:</span>{" "}
+                {selectedBooking.bookingType}
+              </p>
+              <p>
                 <span className="font-semibold">Check-out Time:</span>{" "}
                 {selectedBooking.checkOutTimestamp?.toDate().toLocaleString()}
               </p>
@@ -431,9 +437,9 @@ const BookHistory = () => {
           <div className="bg-white p-8 rounded-lg w-full max-w-md shadow-lg">
             <h2 className="text-2xl font-bold mb-4 text-gray-800">Confirm Deletion</h2>
             <p className="mb-6 text-gray-700">
-              {deleteType === 'multiple' 
+              {deleteType === "multiple" 
                 ? `Are you sure you want to delete ${selectedBookings.length} selected booking(s)?` 
-                : 'Are you sure you want to delete this booking?'
+                : "Are you sure you want to delete this booking?"
               }
             </p>
             <div className="flex justify-end space-x-4">
