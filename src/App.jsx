@@ -19,14 +19,15 @@ import BookRooms from "./StaffSide/BookRooms";
 import BookHistory from "./StaffSide/BookHistory";
 import Report from "./StaffSide/Report";
 import Reports from "./Admin/Reports";
-import ComplaintReportForm from './ComplaintReportForm';
-import ReportsTable from './Admin/ReportsTable';
+import ComplaintReportForm from "./ComplaintReportForm";
+import ReportsTable from "./Admin/ReportsTable";
 import Settings from "./StaffSide/Settings";
-import AdminSetting from './Admin/AdminSettings';
-import PublicHome from "./PublicPage/PublicHome"; 
+import AdminSetting from "./Admin/AdminSettings";
+import PublicHome from "./PublicPage/PublicHome";
 import PublicBooking from "./PublicPage/PublicBooking";
+import ForgotPassword from "./ForgotPassword";
+import StaffForm from "./Admin/StaffForm";
 import OnlineBookings from "./StaffSide/OnlineBookings";
-
 
 const App = () => {
   return (
@@ -36,10 +37,11 @@ const App = () => {
         <Route path="/" element={<Navigate to="/public-home" replace />} />
 
         {/* Public Routes */}
-        <Route path="/public-home" element={<PublicHome/>} /> 
+        <Route path="/public-home" element={<PublicHome />} />
         <Route path="/public-booking" element={<PublicBooking />} />
         <Route path="/Report" element={<ComplaintReportForm />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
 
         {/* Admin Routes */}
@@ -47,7 +49,7 @@ const App = () => {
           path="/admin-home"
           element={
             <ProtectedRoutes requiredRole="admin">
-              <Admin />{" "}
+              <Admin />
             </ProtectedRoutes>
           }
         >
@@ -55,10 +57,9 @@ const App = () => {
           <Route path="room-management" element={<AdminRoomManagement />} />
           <Route path="complaints" element={<ReportsTable />} />
           <Route path="admin-rooms-availability" element={<RoomAvailability />} />
-          <Route path="create-user" element={<Register />} />
+          <Route path="create-user" element={<StaffForm />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="setting" element={<AdminSetting/>} />
-          {/* Add more nested routes here if needed */}
+          <Route path="setting" element={<AdminSetting />} />
         </Route>
 
         {/* Staff Routes */}
@@ -66,7 +67,7 @@ const App = () => {
           path="/home"
           element={
             <ProtectedRoutes requiredRole="staff">
-              <Staff />{" "}
+              <Staff />
             </ProtectedRoutes>
           }
         >
@@ -77,7 +78,7 @@ const App = () => {
           <Route path="online-bookings" element={<OnlineBookings />} />
           <Route path="book-history" element={<BookHistory />} />
           <Route path="report" element={<Report />} />
-          <Route path="setting" element={<Settings/>} />
+          <Route path="setting" element={<Settings />} />
         </Route>
 
         {/* Default Redirect to Public Home */}

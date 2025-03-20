@@ -283,18 +283,18 @@ const BookHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan="10" className="text-center p-16">
-                  <div className="flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-                    <p className="text-gray-600 font-medium ml-3 animate-bounce">
-                      Loading...
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : currentBookings.length === 0 ? (
+          {isLoading ? (
+          <tr>
+            <td colSpan="9" className="text-center p-16">
+              <div className="flex justify-center items-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+                <p className="text-gray-600 font-medium ml-3 ">
+                Loading...
+              </p>
+              </div>
+            </td>
+          </tr>
+        ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="10" className="p-6 text-center text-gray-600">
                   No booking history found.

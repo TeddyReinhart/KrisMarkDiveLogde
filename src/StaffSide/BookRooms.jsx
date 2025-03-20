@@ -72,13 +72,7 @@ const BookRooms = () => {
   const handleFilterChange = (e) => {
     const selectedFilter = e.target.value;
     setFilter(selectedFilter);
-    filterBookings(searchQuery, selectedFilter, bookingTypeFilter);
-  };
-
-  // Handle booking type filter changes
-  const handleBookingTypeFilter = (type) => {
-    setBookingTypeFilter(type);
-    filterBookings(searchQuery, filter, type);
+    filterBookings(query, selectedFilter);
   };
 
   // Filter bookings based on search query, room filter, and booking type filter
@@ -171,7 +165,7 @@ const BookRooms = () => {
       fetchBookings(); // Refresh the list of bookings
     } catch (error) {
       console.error("Error during check-out and payment: ", error);
-      alert("Failed to complete check-out and payment. Please try again.");
+      
     }
   };
 
@@ -271,19 +265,19 @@ const BookRooms = () => {
               <th className="p-4 text-left text-gray-700 font-bold">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan="8" className="text-center p-16">
-                  <div className="flex justify-end items-center pr-55">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
-                    <p className="text-gray-600 font-medium ml-3 animate-bounce">
-                      Loading...
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            ) : currentBookings.length === 0 ? (
+        <tbody>
+        {isLoading ? (
+        <tr>
+          <td colSpan="5" className="text-center p-16">
+            <div className="flex justify-end items-center pr-55">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-orange-500"></div>
+              <p className="text-gray-600 font-medium ml-3 animate-bounce">
+                Loading...
+              </p>
+            </div>
+          </td>
+        </tr>
+      ) : currentBookings.length === 0 ? (
               <tr>
                 <td colSpan="8" className="p-6 text-center text-gray-600">
                   No bookings found.
@@ -356,242 +350,167 @@ const BookRooms = () => {
 
       {/* Modal for Full Details */}
       {isModalOpen && selectedBooking && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
-    <div className="bg-white p-8 rounded-lg w-full max-w-2xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Booking Details</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
-        {/* Room Details */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-orange-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Room</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.roomDetails?.name}</p>
-          </div>
-        </div>
+        <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto animate-slideIn">
+            {/* Header Section */}
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Booking Details</h2>
+                <p className="text-sm text-gray-500 mt-1">Booking ID: {selectedBooking}</p>
+              </div>
+              <button 
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Close modal"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-        {/* Check-in Date */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-blue-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Check-in</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.checkInDate}</p>
-          </div>
-        </div>
+            {/* Content Section */}
+            <div className="p-6">
+              {/* Booking Summary Card */}
+              <div className="bg-orange-50 rounded-lg p-4 mb-6 border border-orange-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-orange-400 font-medium">CHECK-IN</p>
+                      <p className="text-gray-800 font-semibold">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.checkInDate || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <p className="text-xs text-orange-500 font-medium">CHECK-OUT</p>
+                      <p className="text-gray-800 font-semibold">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.checkOutDate || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        {/* Check-out Date */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-blue-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Check-out</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.checkOutDate}</p>
-          </div>
-        </div>
+              {/* Main Content Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Room Details</h3>
+                  <div className="flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-gray-800">Room</p>
+                      <p className="text-gray-600">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.roomDetails?.name || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-gray-800">Guests</p>
+                      <p className="text-gray-600">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.numberOfGuests || 'N/A'} {parseInt(filteredBookings.find((b) => b.id === selectedBooking)?.numberOfGuests) > 1 ? 'persons' : 'person'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-        {/* Number of Guests */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Number of Guests</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.numberOfGuests}</p>
-          </div>
-        </div>
+                {/* Right Column */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3">Guest Information</h3>
+                  <div className="flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-gray-800">Guest Name</p>
+                      <p className="text-gray-600">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.firstName}{' '}
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.lastName || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-gray-800">Email</p>
+                      <p className="text-gray-600 break-all">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.email || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-gray-800">Mobile</p>
+                      <p className="text-gray-600">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.mobileNumber || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-gray-800">Gender</p>
+                      <p className="text-gray-600">
+                        {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.gender || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        {/* Guest Name */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-purple-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Guest Name</p>
-            <p>
-              {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.firstName}{" "}
-              {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.lastName}
-            </p>
-          </div>
-        </div>
+            {/* Special Request Section */}
+            <div className="px-6 pb-6">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                <div className="flex items-center space-x-2 mb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                  <h3 className="font-semibold text-gray-800">Special Request</h3>
+                </div>
+                <p className="text-gray-600 whitespace-pre-wrap">
+                  {filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.specialRequest || 'None specified'}
+                </p>
+              </div>
+            </div>
 
-        {/* Email */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-pink-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Email</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.email}</p>
+            {/* Footer Section */}
+            <div className="p-6 border-t border-gray-100 flex justify-end space-x-3">
+              <button
+                onClick={closeModal}
+                className="bg-orange-400 text-white px-6 py-2 rounded-lg hover:bg-orange-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Mobile Number */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-teal-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Mobile Number</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.mobileNumber}</p>
-          </div>
-        </div>
-
-        {/* Gender */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-indigo-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Gender</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.gender}</p>
-          </div>
-        </div>
-
-        {/* Special Request */}
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-yellow-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="font-semibold">Special Request</p>
-            <p>{filteredBookings.find((b) => b.id === selectedBooking)?.guestInfo.specialRequest}</p>
-          </div>
-        </div>
-      </div>
-      <button
-        onClick={closeModal}
-        className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Payment Modal */}
       {isPaymentModalOpen && selectedBookingData && (
-        <div className="fixed inset-0 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Payment Details</h2>
             <form onSubmit={handlePaymentSubmit}>
@@ -689,7 +608,7 @@ const BookRooms = () => {
 
       {/* Confirmation Modal */}
       {isConfirmationModalOpen && (
-        <div className="fixed inset-0 bg-opacity-50 flex justify-center items-center z-50 shadow-lg">
+        <div className="fixed inset-0 bg-gray-900/50 flex justify-center items-center z-50 shadow-lg">
           <div className="bg-white p-6 rounded-lg shadow-2xl text-center relative">
             <h3 className="text-lg font-semibold">Payment Confirmed!</h3>
             <p className="text-gray-600 my-4">The payment has been successfully processed.</p>
