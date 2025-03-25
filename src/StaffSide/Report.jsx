@@ -11,12 +11,18 @@ const Report = () => {
     issue: "",
     priority: "High",
     status: "Pending",
+    imageUrl: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === "image") {
+      setImageFile(e.target.files[0]);
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -24,6 +30,17 @@ const Report = () => {
     setIsSubmitting(true);
 
     try {
+      let uploadedImageUrl = "";
+
+      if (imageFile) {
+        const storageRef = ref(storage, `reports/${Date.now()}_${imageFile.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, imageFile);
+
+        await uploadTask;
+        uploadedImageUrl = await getDownloadURL(storageRef);
+      }
+
+      const reportData = { ...formData, imageUrl: uploadedImageUrl };
       await addDoc(collection(db, "reports"), formData);
       setShowModal(true);
     } catch (error) {
@@ -140,6 +157,12 @@ const Report = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Image upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Upload Image:</label>
+            <input type="file" name="image" accept="image/*" onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-orange-500" />
           </div>
 
           {/* Submit Button */}
