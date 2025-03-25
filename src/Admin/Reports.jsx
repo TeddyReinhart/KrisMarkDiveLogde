@@ -13,9 +13,13 @@ const Reports = () => {
     const fetchReports = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "reports"));
-        const reportsList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const reportsList = await Promise.all(querySnapshot.docs.map(async (doc) => {
+          const data = doc.data();
+          if (data.imageUrl) {
+            const imageRef = ref(storage, data.imageUrl);
+            data.imageUrl = await getDownloadURL(imageRef);
+          }
+          return { id: doc.id, ...data };
         }));
         setReports(reportsList);
       } catch (error) {
@@ -137,6 +141,7 @@ const Reports = () => {
                   <th className="p-4 text-left text-sm font-semibold">Issue</th>
                   <th className="p-4 text-left text-sm font-semibold">Priority</th>
                   <th className="p-4 text-left text-sm font-semibold">Status</th>
+                  <th className="p-4 text-left text-sm font-semibold">Image</th>
                   <th className="p-4 text-left text-sm font-semibold">Action</th>
                 </tr>
               </thead>
@@ -175,6 +180,13 @@ const Reports = () => {
                           )}
                           {report.status}
                         </span>
+                      </td>
+                      <td className="p-4 text-sm">
+                        {report.imageUrl ? (
+                          <img src={report.imageUrl} alt="Report" className="w-16 h-16 object-cover rounded" />
+                        ) : (
+                          <span className="text-gray-400 text-xs">No Image</span>
+                        )}
                       </td>
                       <td className="p-4 text-sm">
                         {report.status !== "Completed" ? (
