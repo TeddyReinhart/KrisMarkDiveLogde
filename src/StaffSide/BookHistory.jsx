@@ -251,12 +251,6 @@ const BookHistory = () => {
         >
           Export to Excel
         </button>
-        <button
-          onClick={() => openConfirmModal("multiple")}
-          className="w-full md:w-auto bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Delete Selected
-        </button>
       </div>
 
       {/* Bookings Table */}
@@ -264,13 +258,6 @@ const BookHistory = () => {
         <table className="min-w-full">
           <thead className="bg-orange-500">
             <tr>
-              <th className="p-4 text-left text-gray-700 font-bold w-1/12">
-                <input
-                  type="checkbox"
-                  checked={selectedBookings.length === currentBookings.length && currentBookings.length > 0}
-                  onChange={handleSelectAll}
-                />
-              </th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/8">Room</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/8">Check-in</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/8">Check-out</th>
@@ -279,7 +266,6 @@ const BookHistory = () => {
               <th className="p-4 text-left text-gray-700 font-bold w-1/4">Email</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/6">Booking Type</th>
               <th className="p-4 text-left text-gray-700 font-bold w-1/6">Check-out Time</th>
-              <th className="p-4 text-left text-gray-700 font-bold w-1/12">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -305,16 +291,6 @@ const BookHistory = () => {
                   className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => openModal(booking)} // Make the entire row clickable
                 >
-                  <td className="p-4 text-gray-700 w-1/12">
-                    <input
-                      type="checkbox"
-                      checked={selectedBookings.includes(booking.id)}
-                      onChange={(e) => {
-                        e.stopPropagation(); // Prevent row click event
-                        handleSelectBooking(booking.id);
-                      }}
-                    />
-                  </td>
                   <td className="p-4 text-gray-700 w-1/8">{booking.selectedRoom}</td>
                   <td className="p-4 text-gray-700 w-1/8">{booking.checkInDate}</td>
                   <td className="p-4 text-gray-700 w-1/8">{booking.checkOutDate}</td>
@@ -326,17 +302,6 @@ const BookHistory = () => {
                   <td className="p-4 text-gray-700 w-1/6">{booking.bookingType}</td>
                   <td className="p-4 text-gray-700 w-1/6">
                     {booking.checkOutTimestamp?.toDate().toLocaleString()}
-                  </td>
-                  <td className="p-4 text-gray-700 w-1/12">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent row click event
-                        openConfirmModal("single", booking.id);
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
                   </td>
                 </tr>
               ))
@@ -534,34 +499,8 @@ const BookHistory = () => {
   </div>
 )}
 
-      {/* Confirmation Modal for Deletion */}
-      {isConfirmModalOpen && (
-        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg w-full max-w-md shadow-lg">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Confirm Deletion</h2>
-            <p className="mb-6 text-gray-70">
-              {deleteType === "multiple" 
-                ? `Are you sure you want to delete ${selectedBookings.length} selected booking(s)?` 
-                : "Are you sure you want to delete this booking?"
-              }
-            </p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={closeConfirmModal}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={deleteSelectedBookings}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
+      
     </div>
   );
 };
