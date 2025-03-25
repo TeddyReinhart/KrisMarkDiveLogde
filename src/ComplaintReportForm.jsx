@@ -11,6 +11,7 @@ function ComplaintReportForm() {
     description: "",
     date: new Date().toISOString().split("T")[0], // Default to today's date
     priority: "Low", // Default priority
+    image: null,
   });
   const [rooms, setRooms] = useState([]); // State to store rooms
   const [loading, setLoading] = useState(false);
@@ -74,6 +75,7 @@ function ComplaintReportForm() {
         description: "",
         date: new Date().toISOString().split("T")[0], // Reset date to today
         priority: "Low",
+        image: null
       }); // Reset form
     } catch (err) {
       console.error("Error submitting complaint: ", err);
@@ -188,6 +190,16 @@ function ComplaintReportForm() {
               <option value="Medium">Medium</option>
               <option value="High">High</option>
             </select>
+          </div>
+
+          {/* Image Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Image (Optional)</label>
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleInputChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
           </div>
 
           {/* Submit Button */}
